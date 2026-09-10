@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="app_title">兩真一假 破冰對話 | Two Truths & A Lie</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <header class="header">
+    <h1 data-i18n="app_title">兩真一假 破冰對話</h1>
+    <button class="btn-outline" onclick="toggleLanguage()" id="lang-switch-btn">EN</button>
+  </header>
+
+  <!-- 1. 角色選擇 -->
+  <section id="view-landing" class="card">
+    <p style="color:var(--text-muted);" data-i18n="landing_desc">請選擇您的角色進入遊戲：</p>
+    <button class="btn" onclick="setupHost()" data-i18n="btn_as_host">我是主持人（大螢幕 / 投屏）</button>
+    <button class="btn btn-secondary" onclick="setupPlayer()" data-i18n="btn_as_player">我是參與者（手機端）</button>
+  </section>
+
+  <!-- 2. 主持人大廳 (Lobby + 引導折疊面板) -->
+  <section id="view-host-lobby" class="card view-section">
+    <!-- 🎛️ 引導面板 1: 主持人隨身提詞板 (Facilitator Cheatsheet) -->
+    <details class="facilitator-guide">
+      <summary data-i18n="guide_summary">🎙️ 主持人引導提詞板（點擊展開 30 秒腳本與契約）</summary>
+      <div class="guide-content">
+        <p><b>🗣️ 開場 30 秒（安全契約）：</b><br>
+          <span data-i18n="guide_script_opening">「今天我們純粹認識彼此有趣的一面。規則很簡單：2 真 1 假。大家可以自由選擇出題、只猜不說，或者只當聽眾。不想回答隨時說『Pass』，嚴禁查家宅！」</span>
+        </p>
+        <p><b>💡 冷場救援破局：</b><br>
+          <span data-i18n="guide_script_icebreak">「大家如果猶豫，建議先挑一個你最直覺『不可能』的敘述，問他細節是哪一年發生的！」</span>
+        </p>
+      </div>
+    </details>
+
+    <div style="text-align:center; margin-top: 14px;">
+      <h2 style="margin:4px 0;"><span data-i18n="txt_room_id">房號</span>：<span id="host-room-id" style="color:var(--primary);">...</span></h2>
+      <div id="host-qr"></div>
+      <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="txt_qr_hint">手機掃碼或輸入 8 位數即可連線</p>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="lobby-header">
+      <b data-i18n="lbl_player_roster">已就緒名單（點擊名字開始）：</b>
+      <span style="font-size:0.85rem; color:var(--text-muted);"><span data-i18n="txt_online">在線</span>: <b id="host-count">0</b></span>
+    </div>
+    
+    <div id="host-player-grid" class="player-grid"></div>
+    <p id="host-empty-tip" class="empty-tip" data-i18n="txt_waiting_submissions">⏳ 等待大家進入或提交「2真1假」...</p>
+
+    <!-- 終場延伸按鈕 -->
+    <button id="btn-end-session" class="btn btn-outline" style="margin-top:20px; width:100%; border-color:#94a3b8; color:#475569;" onclick="triggerWrapUp()" data-i18n="btn_wrap_up">
+      🎉 圓滿結束遊戲，派發「會後連結卡」至全員手機
+    </button>
+  </section>
+
+  <!-- 3. 主持人展示 (含溫和計時器 + Debrief 引導卡) -->
+  <section id="view-host-game" class="card view-section">
+    <div class="badge" data-i18n="badge_guessing">當前環節：猜猜誰是假話</div>
+    <h2 style="margin:6px 0;"><span id="host-current-name" style="color:var(--primary);"></span> <span data-i18n="txt_sharing_suffix">的個人分享</span></h2>
+    
+    <!-- 溫和計時條 (Soft Timer: 90 秒自然流逝，無壓迫警報) -->
+    <div class="soft-timer-wrap">
+      <div class="soft-timer-label">
+        <span data-i18n="lbl_chat_time">自由提問交流時間 (建議 90s)</span>
+        <span id="host-timer-text">01:30</span>
+      </div>
+      <div class="soft-timer-bar"><div id="host-timer-fill" class="soft-timer-fill"></div></div>
+    </div>
+
+    <div id="host-statements-display"></div>
+
+    <button id="btn-host-reveal" class="btn btn-success" onclick="revealHostAnswer()" data-i18n="btn_reveal">揭曉答案 (Tick & Cross)</button>
+    <button id="btn-host-back" class="btn btn-secondary" style="display:none;" onclick="backToHostLobby()" data-i18n="btn_next_person">返回名單大廳（下一位）</button>
+
+    <!-- 揭曉背後故事 -->
+    <div id="host-story-box" class="story-box" style="display:none;">
+      <h4 style="margin:0 0 4px 0; color:#166534;" data-i18n="lbl_story_title">背後故事分享：</h4>
+      <p id="host-story-content" style="margin:0; font-size:0.95rem;"></p>
+    </div>
+
+    <!-- 🎛️ 引導面板 2: 揭曉後的 Debrief 浮現小卡 -->
+    <div id="host-debrief-box" class="debrief-box" style="display:none;">
+      <b data-i18n="debrief_title">💬 主持人隨機銜接（挑一題聊聊）：</b>
+      <ul id="debrief-questions-list" style="margin:4px 0 0 0; padding-left:18px; font-size:0.9rem;"></ul>
+    </div>
+  </section>
+
+  <!-- 4. 參與者端：連線與角色梯度選擇 (Participation Gradient) -->
+  <section id="view-player-join" class="card view-section">
+    <h2 data-i18n="title_join_room">加入迎新房間</h2>
+    <label data-i18n="lbl_room_code">房間代碼 (8 位數)：</label>
+    <input type="text" id="join-room-id" placeholder="例如：12345678" />
+    <label data-i18n="lbl_nickname">你的名字 / 稱呼：</label>
+    <input type="text" id="join-player-name" placeholder="例如：Alex / 詠思" />
+
+    <!-- 梯度選擇 -->
+    <label data-i18n="lbl_join_mode">今日參與方式：</label>
+    <select id="join-mode-select">
+      <option value="full" data-i18n="opt_mode_full">🌟 我想出題並參與投票</option>
+      <option value="vote_only" data-i18n="opt_mode_vote">🙋 我只想猜題投票（暫不出題）</option>
+      <option value="spectator" data-i18n="opt_mode_listen">👂 我只想旁聽放鬆（純觀眾）</option>
+    </select>
+
+    <button class="btn" onclick="connectToHost()" data-i18n="btn_join">連線進入</button>
+  </section>
+
+  <!-- 5. 參與者端：出題介面 (含手機版防呆輸入) -->
+  <section id="view-player-write" class="card view-section">
+    <div class="badge" data-i18n="badge_write_truths">填寫你的 2 真 1 假</div>
+    <div class="tips-box">
+      <b data-i18n="txt_tips_title">💡 出題小提示（越猜不到越有趣！）：</b>
+      <ul style="margin:6px 0 0 0; padding-left:18px;">
+        <li data-i18n="txt_tip_truth"><b>真話：</b>看似假但千真萬確的奇特經歷</li>
+        <li data-i18n="txt_tip_lie"><b>假話：</b>聽起來很真實且合理的日常習慣</li>
+      </ul>
+    </div>
+
+    <label data-i18n="lbl_stmt_1">敘述 1：</label>
+    <textarea id="p-stmt-0" rows="2" placeholder="例如：我完全不吃辣"></textarea>
+    <label data-i18n="lbl_stmt_2">敘述 2：</label>
+    <textarea id="p-stmt-1" rows="2" placeholder="例如：我曾經拿過全港滑浪季軍"></textarea>
+    <label data-i18n="lbl_stmt_3">敘述 3：</label>
+    <textarea id="p-stmt-2" rows="2" placeholder="例如：我右手小指比普通人多一節"></textarea>
+
+    <label data-i18n="lbl_select_lie">哪一句是【假話】？</label>
+    <select id="p-lie-index">
+      <option value="0" data-i18n="opt_lie_1">敘述 1 是假話 ❌</option>
+      <option value="1" data-i18n="opt_lie_2">敘述 2 是假話 ❌</option>
+      <option value="2" data-i18n="opt_lie_3">敘述 3 是假話 ❌</option>
+    </select>
+
+    <label data-i18n="lbl_story_desc">背後故事（揭曉時同大家分享）：</label>
+    <textarea id="p-story" rows="2" placeholder="簡單交代背景..."></textarea>
+
+    <button class="btn" onclick="submitToRoom()" data-i18n="btn_submit">提交給大螢幕大廳</button>
+  </section>
+
+  <!-- 6. 參與者端：投票介面 -->
+  <section id="view-player-vote" class="card view-section">
+    <div id="player-waiting-msg" style="text-align:center; padding:20px 0;">
+      <h3 data-i18n="txt_submit_success">✅ 已連線就緒！</h3>
+      <p style="color:var(--text-muted);" data-i18n="txt_wait_host_select">等待主持人點擊大螢幕名單開始猜謎...</p>
+    </div>
+
+    <div id="player-active-voting" style="display:none;">
+      <div class="badge" data-i18n="badge_voting_active">正在猜謎</div>
+      <h3><span data-i18n="lbl_target_person">當前主角</span>：<span id="vote-target-name" style="color:var(--primary);"></span></h3>
+      <p style="font-size:0.9rem; color:var(--text-muted);" data-i18n="txt_vote_which_lie">哪一句才是假話？點擊投票：</p>
+      <div id="player-choices-box"></div>
+      <p id="player-voted-alert" style="display:none; color:var(--primary); text-align:center; font-weight:bold; margin-top:10px;" data-i18n="txt_vote_recorded">
+        已記錄投票！請看大螢幕揭曉...
+      </p>
+    </div>
+
+    <!-- 🎛️ 引導面板 3: 48小時會後連結卡 (Connection Wrap-up Card) -->
+    <div id="player-wrap-up-card" style="display:none; margin-top:20px; border-top:1px dashed var(--border); padding-top:14px;">
+      <div class="badge" style="background:#e0e7ff; color:#3730a3;" data-i18n="badge_connection">🤝 破冰延伸：會後連結卡</div>
+      <p style="font-size:0.9rem; margin:6px 0;" data-i18n="txt_connection_desc">記住剛才讓你印象最深的同事，隨時在 Slack / Teams 找他喝杯咖啡：</p>
+      <textarea id="wrap-up-text" rows="3" style="font-size:0.85rem; color:#475569;"></textarea>
+      <button class="btn btn-secondary" onclick="copySlackText()" data-i18n="btn_copy_slack">📋 一鍵複製訊息 (貼至 Slack / Teams)</button>
+    </div>
+  </section>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/p2p.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
