@@ -1,67 +1,103 @@
 /* =========================================================================
- * 📡 p2p.js - WebRTC PeerJS 底層連線封裝
+ * 📡 p2p.js - PeerJS 網絡通訊底層（上限 15 人、多 STUN 池、防呆警告）
  * ========================================================================= */
 const PEER_CONFIG = {
   config: {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun.cloudflare.com:3478' }
-    ]
+    ],
+    iceCandidatePoolSize: 4
   }
 };
 
-let peerInstance = null;
-let hostConnection = null;
-let clientConnections = {};
+const MAX_PARTICIPANTS = 15;
 
-function initHostPeer(roomId, onDataCallback, onCountChange) {
-  peerInstance = new Peer(`bx-ice-${roomId}`, PEER_CONFIG);
+let peer = null;
+let hostConn = null;
+let clients = {};
 
-  peerInstance.on('connection', (conn) => {
+// 初始化 Host Peer
+function initHostPeer(roomId, onDataReceived, onCountChanged) {
+  window.addEventListener('beforeunload', (e) => {
+    e.preventDefault();
+    e.returnValue = '活動進行中，關閉分頁將導致所有參與者斷線！';
+  });
+
+  peer = new Peer(`ice-${roomId}`, PEER_CONFIG);
+
+  peer.on('connection', (conn) => {
+    // 15 人硬上限攔截
+    if (Object.keys(clients).length >= MAX_PARTICIPANTS) {
+      setTimeout(() => {
+        try { conn.send({ type: 'ROOM_FULL' }); } catch (e) {}
+        conn.close();
+      }, 500);
+      return;
+    }
+
     conn.on('open', () => {
-      clientConnections[conn.peer] = conn;
-      if (onCountChange) onCountChange(Object.keys(clientConnections).length);
+      clients[conn.peer] = conn;
+      if (onCountChanged) onCountChanged(Object.keys(clients).length);
     });
 
     conn.on('data', (data) => {
-      if (onDataCallback) onDataCallback(data, conn);
+      if (onDataReceived) onDataReceived(data, conn);
     });
 
     conn.on('close', () => {
-      delete clientConnections[conn.peer];
-      if (onCountChange) onCountChange(Object.keys(clientConnections).length);
+      delete clients[conn.peer];
+      if (onCountChanged) onCountChanged(Object.keys(clients).length);
     });
   });
 
-  return peerInstance;
+  peer.on('error', (err) => console.error('[Host Peer Error]', err));
 }
 
-function initClientPeer(roomId, onDataCallback, onConnectSuccess) {
-  peerInstance = new Peer(PEER_CONFIG);
+// 初始化 Client Peer
+function initClientPeer(roomId, onConnected, onDataReceived, onDisconnect, onError) {
+  peer = new Peer(PEER_CONFIG);
 
-  peerInstance.on('open', () => {
-    hostConnection = peerInstance.connect(`bx-ice-${roomId}`);
-    hostConnection.on('open', () => {
-      if (onConnectSuccess) onConnectSuccess();
+  peer.on('open', () => {
+    hostConn = peer.connect(`ice-${roomId}`, { reliable: true });
+
+    hostConn.on('open', () => {
+      if (onConnected) onConnected();
     });
-    hostConnection.on('data', (data) => {
-      if (onDataCallback) onDataCallback(data);
+
+    hostConn.on('data', (data) => {
+      if (data.type === 'ROOM_FULL') {
+        alert('⚠️ 房間已達 15 人上限！請直接在大螢幕共同觀戰。');
+        return;
+      }
+      if (onDataReceived) onDataReceived(data);
+    });
+
+    hostConn.on('close', () => {
+      if (onDisconnect) onDisconnect();
     });
   });
 
-  return peerInstance;
+  peer.on('error', (err) => {
+    console.error('[Client Peer Error]', err);
+    if (onError) onError();
+  });
 }
 
-function broadcastToClients(payload) {
-  Object.values(clientConnections).forEach(conn => {
+// Host 廣播至所有手機
+function broadcastToAll(payload) {
+  Object.values(clients).forEach((conn) => {
     if (conn && conn.open) {
-      try { conn.send(payload); } catch (e) { console.error(e); }
+      try { conn.send(payload); } catch (e) {}
     }
   });
 }
 
+// Client 發送至 Host
 function sendToHost(payload) {
-  if (hostConnection && hostConnection.open) {
-    hostConnection.send(payload);
+  if (hostConn && hostConn.open) {
+    hostConn.send(payload);
   }
 }
