@@ -1,8 +1,404 @@
 /* =========================================================================
- * 🎙️ 培訓實戰專用（投影 1200px、固定開關、三段計時器）
+ * 🎨 style.css - 企業級現代實戰版
+ * 含：1200px 投影寬幅、單手 52vh 零滑動防爆版、深色模式、三段計時器、無內聯樣式支援
  * ========================================================================= */
 
-/* 1. 手機端滿版防爆版 */
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --tick-green: #16a34a;
+  --cross-red: #dc2626;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #3b82f6;
+    --primary-hover: #60a5fa;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  }
+
+  .info-box { background: #172554; border-color: #1e40af; color: #bfdbfe; }
+  .notice-box { background: #451a03; border-color: #92400e; color: #fde68a; }
+  .tips-box { background: #422006; border-color: #713f12; color: #fde68a; }
+  .story-box { background: #052e16; border-color: #166534; color: #86efac; }
+  .choice-card { background: #0f172a; }
+  .choice-card.selected { background: #1e293b; }
+  .choice-card.is-truth { background: #052e16; }
+  .choice-card.is-lie { background: #450a0a; }
+  .player-chip { background: #0f172a; }
+  .player-chip.ready { background: #172554; border-color: #3b82f6; }
+  .player-chip.ready:hover { background: #1e3a8a; }
+  .facilitator-guide { background: #0f172a; border-color: #475569; color: #cbd5e1; }
+  .soft-timer-wrap { background: #0f172a; }
+  .vote-progress-bar { background: #172554; border-color: #1e40af; color: #bfdbfe; }
+  .summary-card { background: #1e293b; }
+  .badge-indigo { background: #312e81; color: #c7d2fe; }
+  .closing-card { background: #1e1b4b; border-color: #4338ca; color: #c7d2fe; }
+  .activity-banner { background: #1e293b; border-color: #334155; }
+}
+
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+}
+
+.container { 
+  width: 100%; 
+  max-width: 600px; 
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 16px;
+  transition: box-shadow 0.2s var(--ease-out);
+}
+
+/* Header & Brand Icon */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.header-brand { display: flex; align-items: center; gap: 8px; }
+.header-brand h1 { margin: 0; font-size: 1.25rem; display: flex; align-items: center; }
+.brand-icon { font-size: 1.4rem; margin-right: 6px; }
+.header-actions { display: flex; gap: 6px; }
+
+/* 遊戲專屬活動橫額 */
+.activity-banner {
+  text-align: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.activity-title { margin: 0; font-size: 1.25rem; color: var(--text); }
+.activity-host { margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted); }
+
+/* 排版與通用 Class */
+.section-lead { color: var(--text-muted); margin-top: 0; }
+.text-primary { color: var(--primary); }
+.text-muted { color: var(--text-muted); }
+.text-sm { font-size: 0.85rem; }
+.text-danger { color: var(--cross-red); }
+.lbl-compact { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+.is-hidden { display: none !important; }
+.full-width { width: 100%; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+/* 提示與情境資訊卡片 (Amber / Blue) */
+.info-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  color: #1e3a8a;
+}
+.info-box-title { color: #1e40af; }
+.info-box-desc { margin: 4px 0 0 0; font-size: 0.85rem; }
+
+.notice-box {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.85rem;
+  color: #92400e;
+  margin-bottom: 12px;
+}
+
+.tips-box {
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+  color: #713f12;
+}
+.tips-list { margin: 6px 0 0 0; padding-left: 18px; line-height: 1.5; }
+
+.story-box {
+  margin-top: 14px;
+  padding: 14px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+}
+.story-title { margin: 0 0 4px 0; color: #166534; font-size: 0.95rem; }
+.story-content { margin: 0; font-size: 0.95rem; line-height: 1.4; }
+
+/* 暖心收尾卡片 */
+.closing-card {
+  background: #e0e7ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0;
+  text-align: center;
+}
+.closing-text { margin: 0; font-size: 0.95rem; line-height: 1.5; color: #3730a3; font-weight: 500; }
+
+/* 按鈕風格與微回饋 */
+.btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+  margin-top: 8px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s var(--ease-out);
+}
+.btn:hover { background-color: var(--primary-hover); box-shadow: var(--shadow-md); }
+.btn:active { transform: scale(0.98); box-shadow: var(--shadow-sm); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.btn-secondary { background: #e2e8f0; color: #334155; }
+.btn-secondary:hover { background: #cbd5e1; }
+.btn-success { background: var(--tick-green); }
+.btn-success:hover { background: #15803d; }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s var(--ease-out);
+}
+.btn-outline:hover { background: rgba(0, 0, 0, 0.04); }
+.btn-outline:active { transform: scale(0.96); }
+.wrap-up-btn { margin-top: 20px; }
+
+/* 表單元件 */
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.view-section { display: none; }
+
+/* 狀態徽章 */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: var(--border);
+  margin-bottom: 8px;
+}
+.badge-indigo { background: #e0e7ff; color: #3730a3; }
+.badge-net { font-size: 0.75rem; color: #fff; background: #94a3b8; }
+.badge-net.connected { background: var(--tick-green); }
+.badge-net.reconnecting { background: #d97706; }
+.badge-net.offline { background: var(--cross-red); }
+
+/* QR Panel 與提詞 */
+.qr-panel { text-align: center; margin-top: 14px; }
+.room-display { margin: 4px 0; font-size: 1.3rem; }
+.qr-hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; }
+#host-qr { display: flex; justify-content: center; margin: 12px 0; }
+#host-qr img { border-radius: 8px; box-shadow: var(--shadow-sm); }
+
+.facilitator-guide {
+  background: #f8fafc;
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.85rem;
+  color: #334155;
+  margin-top: 14px;
+}
+.facilitator-guide summary { cursor: pointer; font-weight: bold; color: var(--primary); }
+.guide-content { margin-top: 8px; line-height: 1.4; }
+
+/* 名單 Grid */
+.lobby-header { display: flex; justify-content: space-between; align-items: center; }
+.player-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.player-chip {
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s var(--ease-out);
+}
+.player-chip.ready { background: #eff6ff; border-color: var(--primary); cursor: pointer; }
+.player-chip.ready:hover { background: #dbeafe; transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.player-chip.ready:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
+.empty-tip { color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 20px; }
+
+/* 遊戲展示頂部 */
+.game-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.game-host-tag {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.presenter-heading { margin: 6px 0; font-size: 1.3rem; }
+
+/* 題目展示選項 */
+.choice-card {
+  background: #f8fafc;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s var(--ease-out);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+.choice-card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.choice-card:active { transform: scale(0.99); }
+.choice-card.selected { border-color: var(--primary); background: #eff6ff; }
+.choice-card.is-truth { border-color: var(--tick-green); background: #f0fdf4; }
+.choice-card.is-lie { border-color: var(--cross-red); background: #fef2f2; }
+.vote-count { margin-top: 4px; }
+
+/* 投票進度條與未投名單 */
+.vote-progress-bar {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: var(--primary);
+  margin: 14px 0 10px 0;
+  padding: 10px;
+  background: #eff6ff;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+}
+.vote-pending-names {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: normal;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* 三段計時器樣式 */
+.soft-timer-wrap {
+  margin: 10px 0 16px 0;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.soft-timer-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.soft-timer-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.soft-timer-fill {
+  height: 100%;
+  background: #3b82f6;
+  width: 100%;
+  transition: width 1s linear, background-color 0.5s ease;
+}
+.soft-timer-fill.warning { background: #f59e0b; }
+.soft-timer-fill.critical { background: var(--cross-red); }
+
+/* 參與者端 */
+.waiting-box { text-align: center; padding: 20px 0; }
+.voted-alert { color: var(--primary); text-align: center; font-weight: bold; margin-top: 10px; }
+
+/* 總結卡片 (零內聯樣式支援) */
+.summary-title { margin: 6px 0; }
+.privacy-note { font-size: 0.85rem; color: var(--text-muted); }
+.summary-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.summary-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.summary-card-name { margin: 0; font-size: 1.15rem; }
+.badge-fooled { background: #fee2e2; color: #991b1b; }
+.summary-stmt-line { margin: 6px 0; font-size: 0.95rem; line-height: 1.4; }
+.summary-lie-tag { color: var(--cross-red); font-weight: bold; margin: 8px 0; }
+
+/* 手機端單手零滑動佈局 */
 @media (max-width: 600px) {
   #player-choices-box {
     display: flex;
@@ -26,44 +422,21 @@
   }
 }
 
-/* 2. 投影模式 (1200px 寬幅與雙欄適應) */
-body.presentation-mode {
-  font-size: 1.25rem;
-}
-body.presentation-mode .container {
-  max-width: 1200px;
-}
+/* 🖥️ 投影模式（寬幅 1200px + 大字號） */
+body.presentation-mode { font-size: 1.25rem; }
+body.presentation-mode .container { max-width: 1200px; }
 body.presentation-mode h1 { font-size: 2.2rem; }
 body.presentation-mode h2 { font-size: 1.9rem; }
-body.presentation-mode .choice-card {
-  padding: 24px;
-  font-size: 1.4rem;
-  border-width: 3px;
-  margin-bottom: 16px;
-}
-body.presentation-mode .player-chip {
-  padding: 20px;
-  font-size: 1.2rem;
-  min-height: 90px;
-}
-body.presentation-mode .story-box {
-  padding: 22px;
-  font-size: 1.25rem;
-}
-body.presentation-mode .summary-card {
-  padding: 24px;
-  font-size: 1.2rem;
-}
-body.presentation-mode .player-grid {
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-}
+body.presentation-mode .game-host-tag { font-size: 1.1rem; }
+body.presentation-mode .choice-card { padding: 24px; font-size: 1.4rem; border-width: 3px; margin-bottom: 16px; }
+body.presentation-mode .player-chip { padding: 20px; font-size: 1.2rem; min-height: 90px; }
+body.presentation-mode .story-box { padding: 22px; font-size: 1.25rem; }
+body.presentation-mode .summary-card { padding: 24px; font-size: 1.2rem; }
+body.presentation-mode .player-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+body.presentation-mode .closing-text { font-size: 1.15rem; }
 
-/* 3. 常駐右上方投影切換鍵 */
+/* 常駐切換按鈕 */
 .btn-toggle-presentation {
-  position: fixed;
-  top: 16px;
-  right: 76px; /* 留出空間給 EN 語言鈕 */
-  z-index: 1000;
   background: #334155;
   color: #ffffff;
   border: 1px solid #475569;
@@ -72,41 +445,8 @@ body.presentation-mode .player-grid {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
 }
 .btn-toggle-presentation:hover { background: #1e293b; }
-.btn-toggle-presentation.active {
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
-/* 4. 投票進度與未投同仁提示 */
-.vote-progress-bar {
-  text-align: center;
-  font-size: 1.05rem;
-  font-weight: bold;
-  color: var(--primary);
-  margin: 12px 0;
-  padding: 10px;
-  background: #eff6ff;
-  border-radius: 8px;
-  border: 1px solid #bfdbfe;
-}
-.vote-pending-names {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: normal;
-  color: #64748b;
-  margin-top: 4px;
-}
-
-/* 5. 三段式節奏計時器 */
-.soft-timer-fill {
-  height: 100%;
-  background: #3b82f6;
-  width: 100%;
-  transition: width 1s linear, background-color 0.5s ease;
-}
-.soft-timer-fill.warning { background: #f59e0b; }
-.soft-timer-fill.critical { background: var(--cross-red); }
+.btn-toggle-presentation.active { background: var(--primary); border-color: var(--primary); }
