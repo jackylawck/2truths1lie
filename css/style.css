@@ -1,231 +1,112 @@
-:root {
-  --primary: #2563eb;
-  --bg: #f8fafc;
-  --card: #ffffff;
-  --text: #1e293b;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --tick-green: #16a34a;
-  --cross-red: #dc2626;
+/* =========================================================================
+ * 🎙️ 培訓實戰專用（投影 1200px、固定開關、三段計時器）
+ * ========================================================================= */
+
+/* 1. 手機端滿版防爆版 */
+@media (max-width: 600px) {
+  #player-choices-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 14px;
+    min-height: 52vh;
+    max-height: 72vh;
+    overflow-y: auto;
+  }
+  #player-choices-box .choice-card {
+    flex: 1 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px;
+    font-size: 1.05rem;
+    line-height: 1.4;
+    min-height: 80px;
+    margin-bottom: 0;
+  }
 }
 
-* {
-  box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+/* 2. 投影模式 (1200px 寬幅與雙欄適應) */
+body.presentation-mode {
+  font-size: 1.25rem;
 }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  margin: 0;
-  padding: 16px;
-  display: flex;
-  justify-content: center;
+body.presentation-mode .container {
+  max-width: 1200px;
 }
-
-.container { width: 100%; max-width: 600px; }
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+body.presentation-mode h1 { font-size: 2.2rem; }
+body.presentation-mode h2 { font-size: 1.9rem; }
+body.presentation-mode .choice-card {
+  padding: 24px;
+  font-size: 1.4rem;
+  border-width: 3px;
+  margin-bottom: 16px;
+}
+body.presentation-mode .player-chip {
   padding: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-  margin-bottom: 16px;
+  font-size: 1.2rem;
+  min-height: 90px;
+}
+body.presentation-mode .story-box {
+  padding: 22px;
+  font-size: 1.25rem;
+}
+body.presentation-mode .summary-card {
+  padding: 24px;
+  font-size: 1.2rem;
+}
+body.presentation-mode .player-grid {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-h1 { font-size: 1.25rem; }
-
-.btn {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 1rem;
-  cursor: pointer;
+/* 3. 常駐右上方投影切換鍵 */
+.btn-toggle-presentation {
+  position: fixed;
+  top: 16px;
+  right: 76px; /* 留出空間給 EN 語言鈕 */
+  z-index: 1000;
+  background: #334155;
+  color: #ffffff;
+  border: 1px solid #475569;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
   font-weight: 600;
-  width: 100%;
-  margin-top: 8px;
-  transition: opacity 0.2s;
-}
-.btn:hover { opacity: 0.9; }
-.btn-secondary { background: #e2e8f0; color: #334155; }
-.btn-success { background: var(--tick-green); }
-.btn-outline {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 4px 10px;
-  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.2s ease;
 }
-
-input, select, textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-top: 4px;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
-}
-
-.view-section { display: none; }
-
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  background: #e2e8f0;
-  margin-bottom: 8px;
-}
-
-.badge-net { font-size: 0.75rem; color: #fff; background: #94a3b8; }
-.badge-net.connected { background: var(--tick-green); }
-.badge-net.reconnecting { background: #d97706; }
-.badge-net.offline { background: var(--cross-red); }
-
-.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-.lobby-header { display: flex; justify-content: space-between; align-items: center; }
-
-.player-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
-  margin-top: 12px;
-}
-.player-chip {
-  background: #f1f5f9;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  text-align: center;
-  transition: all 0.2s;
-}
-.player-chip.ready {
-  background: #eff6ff;
+.btn-toggle-presentation:hover { background: #1e293b; }
+.btn-toggle-presentation.active {
+  background: var(--primary);
   border-color: var(--primary);
-  cursor: pointer;
 }
-.player-chip.ready:hover { background: #dbeafe; }
 
-.choice-card {
-  background: #f8fafc;
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 10px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-}
-.choice-card.selected { border-color: var(--primary); background: #eff6ff; }
-.choice-card.is-truth { border-color: var(--tick-green); background: #f0fdf4; }
-.choice-card.is-lie { border-color: var(--cross-red); background: #fef2f2; }
-.result-badge { position: absolute; right: 14px; top: 12px; font-weight: bold; font-size: 1rem; }
-
-.tips-box {
-  background: #fefce8;
-  border: 1px solid #fef08a;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 0.85rem;
-  margin-bottom: 12px;
-  color: #713f12;
-}
-.story-box {
-  margin-top: 14px;
-  padding: 12px;
-  background: #f0fdf4;
-  border-radius: 8px;
-  border: 1px solid #bbf7d0;
-}
-.empty-tip {
-  color: var(--text-muted);
-  font-size: 0.9rem;
+/* 4. 投票進度與未投同仁提示 */
+.vote-progress-bar {
   text-align: center;
-  margin-top: 20px;
-}
-#host-qr { display: flex; justify-content: center; margin: 10px 0; }
-
-.facilitator-guide {
-  background: #f8fafc;
-  border: 1px dashed #94a3b8;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 0.85rem;
-  color: #334155;
-  margin-bottom: 12px;
-}
-.facilitator-guide summary {
-  cursor: pointer;
+  font-size: 1.05rem;
   font-weight: bold;
   color: var(--primary);
-}
-.guide-content { margin-top: 8px; line-height: 1.4; }
-
-.soft-timer-wrap {
-  margin: 10px 0 16px 0;
-  background: #f1f5f9;
-  border-radius: 6px;
-  padding: 8px 12px;
-}
-.soft-timer-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-.soft-timer-bar {
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.soft-timer-fill {
-  height: 100%;
-  background: #94a3b8;
-  width: 100%;
-  transition: width 1s linear;
-}
-
-.debrief-box {
-  margin-top: 14px;
-  padding: 12px;
+  margin: 12px 0;
+  padding: 10px;
   background: #eff6ff;
   border-radius: 8px;
   border: 1px solid #bfdbfe;
-  color: #1e3a8a;
 }
-
-.offline-banner {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 8px 12px;
-  border-radius: 8px;
+.vote-pending-names {
+  display: block;
   font-size: 0.85rem;
-  font-weight: bold;
-  margin-bottom: 12px;
-  text-align: center;
+  font-weight: normal;
+  color: #64748b;
+  margin-top: 4px;
 }
 
-.summary-card {
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+/* 5. 三段式節奏計時器 */
+.soft-timer-fill {
+  height: 100%;
+  background: #3b82f6;
+  width: 100%;
+  transition: width 1s linear, background-color 0.5s ease;
 }
+.soft-timer-fill.warning { background: #f59e0b; }
+.soft-timer-fill.critical { background: var(--cross-red); }
