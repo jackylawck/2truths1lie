@@ -15,8 +15,8 @@ const I18N_DICT = {
     host_note_desc: "請務必使用電腦（Chrome / Edge）開房投屏！嚴禁用手機當 Host，以免過熱卡頓。",
     lbl_setup_title: "活動主題 / 班別（選填）：",
     lbl_setup_host: "主持人稱呼（選填）：",
-    ph_setup_title: "例如：2026 Q1 新同事迎新會",
-    ph_setup_host: "例如：Jacky",
+    ph_setup_title: "例如：新同事迎新會",
+    ph_setup_host: "例如：Jarvis",
     btn_as_host: "我是主持人（電腦開房投屏）",
     btn_as_player: "我是參與者（手機掃碼）",
 
@@ -119,8 +119,8 @@ const I18N_DICT = {
     host_note_desc: "Please host on a Laptop (Chrome / Edge)! Avoid hosting on mobile devices to prevent overheating and latency.",
     lbl_setup_title: "Event Title / Cohort (Optional):",
     lbl_setup_host: "Facilitator Name (Optional):",
-    ph_setup_title: "e.g., 2026 Q1 New Joiner Onboarding",
-    ph_setup_host: "e.g., Jacky",
+    ph_setup_title: "e.g., New Joiner Onboarding",
+    ph_setup_host: "e.g., Jarvis",
     btn_as_host: "I'm Facilitator (Big Screen / Projector)",
     btn_as_player: "I'm Participant (Mobile Scan)",
 
