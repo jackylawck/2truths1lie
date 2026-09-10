@@ -1,16 +1,104 @@
-<!-- 3. 主持人展示 -->
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="app_title">🎭 兩真一假 破冰對話 | Two Truths & A Lie</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <header class="header">
+    <div class="header-brand">
+      <h1 data-i18n="app_title"><span class="brand-icon">🎭</span>兩真一假 破冰對話</h1>
+      <span id="net-badge" class="badge badge-net" data-i18n="net_badge_standalone">純內聯無存檔</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-toggle-presentation" id="btn-presentation" onclick="togglePresentationMode()" data-i18n="btn_presentation_on">🖥️ 投影模式</button>
+      <button class="btn-outline" onclick="toggleLanguage()" id="lang-switch-btn">EN</button>
+    </div>
+  </header>
+
+  <!-- 1. 入口選單 (Landing) -->
+  <section id="view-landing" class="card">
+    <p class="section-lead" data-i18n="landing_desc">今日想以咩角色加入？</p>
+    
+    <div class="info-box">
+      <b class="info-box-title" data-i18n="host_note_title">💻 主持人注意：</b>
+      <p class="info-box-desc" data-i18n="host_note_desc">
+        請務必使用<b>電腦（Chrome / Edge）</b>開房投屏！嚴禁用手機當 Host，以免過熱卡頓。
+      </p>
+    </div>
+
+    <!-- 活動專屬名堂與主持名稱選填 -->
+    <label class="lbl-compact" data-i18n="lbl_setup_title">活動主題 / 班別（選填）：</label>
+    <input type="text" id="setup-activity-title" data-i18n-ph="ph_setup_title" placeholder="例如：2026 Q1 新同事迎新會" />
+
+    <label class="lbl-compact" data-i18n="lbl_setup_host">主持人稱呼（選填）：</label>
+    <input type="text" id="setup-host-name" data-i18n-ph="ph_setup_host" placeholder="例如：Jacky" />
+
+    <button class="btn" onclick="uiSetupHost()" data-i18n="btn_as_host">我是主持人（電腦開房投屏）</button>
+    <button class="btn btn-secondary" onclick="uiSetupPlayer()" data-i18n="btn_as_player">我是參與者（手機掃碼）</button>
+  </section>
+
+  <!-- 2. 主持人大廳 (Host Lobby) -->
+  <section id="view-host-lobby" class="card view-section">
+    <div class="notice-box" data-i18n="host_notice">
+      ⚠️ <b>主持人注意事項：</b> 請勿重新整理或關閉此分頁！筆電請接上電源線，並確保全體成員連上<b>同一個會議室 Wi-Fi</b>。
+    </div>
+
+    <!-- 活動專屬橫額 -->
+    <div class="activity-banner">
+      <h2 id="host-banner-title" class="activity-title" data-i18n="default_activity_title">團隊破冰對話</h2>
+      <p id="host-banner-host" class="activity-host"><span data-i18n="txt_host_prefix">現場主持：</span>Jacky</p>
+    </div>
+
+    <!-- 動線 1: 先掃碼進場 -->
+    <div class="qr-panel">
+      <h3 class="room-display"><span data-i18n="txt_room_id">房號</span>：<span id="host-room-id" class="text-primary">...</span></h3>
+      <div id="host-qr"></div>
+      <p class="qr-hint" data-i18n="txt_qr_hint">手機掃碼或輸入 8 位數連線（上限 15 人）</p>
+    </div>
+
+    <!-- 動線 2: 再看 30 秒開場契約 -->
+    <details class="facilitator-guide">
+      <summary data-i18n="guide_summary">🎙️ 主持人引導提詞板（30秒開場契約）</summary>
+      <div class="guide-content">
+        <p><b data-i18n="guide_script_opening">「今日純粹認識彼此有趣嘅一面。規則：2 真 1 假。可出題、可純猜、可旁聽。唔想答隨時講 Pass，嚴禁追問私隱！」</b></p>
+      </div>
+    </details>
+
+    <hr class="divider" />
+
+    <!-- 動線 3: 關注進場名單 -->
+    <div class="lobby-header">
+      <b data-i18n="lbl_player_roster">已就緒名單（點擊名字開題）：</b>
+      <span class="text-muted text-sm"><span data-i18n="txt_online">在線人數</span>: <b id="host-count">0</b> / 15</span>
+    </div>
+    <div id="host-player-grid" class="player-grid"></div>
+    <p id="host-empty-tip" class="empty-tip" data-i18n="txt_waiting_submissions">⏳ 等緊大家寫低你嘅 2 真 1 假...</p>
+
+    <button class="btn btn-outline full-width wrap-up-btn" onclick="uiHostEndActivity()" data-i18n="btn_wrap_up">
+      🎉 圓滿結束遊戲，產生現場回顧
+    </button>
+  </section>
+
+  <!-- 3. 主持人展示 (Game Presenting) -->
   <section id="view-host-game" class="card view-section">
     <div class="game-top-bar">
-      <div class="badge" data-i18n="badge_guessing">當前環節：猜猜誰是假話</div>
-      <span class="game-host-tag">🎙️ 現場主持：<b id="game-host-name">Jacky</b></span>
+      <div class="badge" data-i18n="badge_guessing">當前環節：估下邊句係假話</div>
+      <span class="game-host-tag">🎙️ <span data-i18n="txt_host_prefix">現場主持：</span><b id="game-host-name">Jacky</b></span>
     </div>
-    
-    <h2 class="presenter-heading"><span id="host-current-name" class="text-primary"></span> <span data-i18n="txt_sharing_suffix">的分享</span></h2>
+
+    <h2 class="presenter-heading"><span id="host-current-name" class="text-primary"></span> <span data-i18n="txt_sharing_suffix">嘅個人分享</span></h2>
     
     <!-- 90秒三段式軟計時器 -->
     <div class="soft-timer-wrap">
       <div class="soft-timer-label">
-        <span data-i18n="lbl_chat_time">提問交流時間 (建議 90s)</span>
+        <span data-i18n="lbl_chat_time">提問交流時間（建議 90 秒）</span>
         <span id="host-timer-text">01:30</span>
       </div>
       <div class="soft-timer-bar"><div id="host-timer-fill" class="soft-timer-fill"></div></div>
@@ -21,7 +109,7 @@
 
     <!-- 視覺焦點 2: 題目下方呈現投票進度 -->
     <div id="host-vote-progress" class="vote-progress-bar">
-      已投票：<span id="host-voted-count">0</span> / <span id="host-total-voters">0</span> 人
+      <span data-i18n="lbl_voted_progress">已投票：</span><span id="host-voted-count">0</span> / <span id="host-total-voters">0</span> <span data-i18n="lbl_unit_people">人</span>
       <span id="host-pending-list" class="vote-pending-names"></span>
     </div>
 
@@ -34,3 +122,88 @@
       <p id="host-story-content" class="story-content"></p>
     </div>
   </section>
+
+  <!-- 4. 手機端：加入 (Join) -->
+  <section id="view-player-join" class="card view-section">
+    <h2 data-i18n="title_join_room">加入迎新房間</h2>
+    <label data-i18n="lbl_room_code">房間代碼（8 位數）：</label>
+    <input type="text" id="join-room-id" data-i18n-ph="ph_room_code" placeholder="例如：12345678" />
+    <label data-i18n="lbl_nickname">你嘅稱呼：</label>
+    <input type="text" id="join-player-name" data-i18n-ph="ph_nickname" placeholder="例如：Alex / 詠思" />
+    <button class="btn" onclick="uiConnectAsClient()" data-i18n="btn_join">連線進入</button>
+  </section>
+
+  <!-- 5. 手機端：出題 (Write) -->
+  <section id="view-player-write" class="card view-section">
+    <div class="badge" data-i18n="badge_write_truths">填寫你嘅 2 真 1 假</div>
+
+    <div class="tips-box">
+      <b data-i18n="txt_tips_title">💡 填寫小提示（隨心分享，唔使太嚴肅）：</b>
+      <ul class="tips-list">
+        <li data-i18n="tip_food"><b>飲食怪癖：</b>完全唔飲奶茶、食叉燒飯一定要加辣椒油...</li>
+        <li data-i18n="tip_exp"><b>特別經歷：</b>讀書考過潛水牌、喺街度撞過發哥影合照...</li>
+        <li data-i18n="tip_lie"><b>假話靈感：</b>可以寫一個你好想做但未做過嘅願望（例如：想去太空旅行、想學滑雪）！</li>
+      </ul>
+    </div>
+
+    <label data-i18n="lbl_stmt_1">敘述 1：</label>
+    <textarea id="p-stmt-0" rows="2" data-i18n-ph="ph_stmt_1" placeholder="例如：我完全唔識游水 / 我曾經見過發哥合照"></textarea>
+
+    <label data-i18n="lbl_stmt_2">敘述 2：</label>
+    <textarea id="p-stmt-1" rows="2" data-i18n-ph="ph_stmt_2" placeholder="例如：我每日一定要飲兩杯美式黑咖啡"></textarea>
+
+    <label data-i18n="lbl_stmt_3">敘述 3：</label>
+    <textarea id="p-stmt-2" rows="2" data-i18n-ph="ph_stmt_3" placeholder="例如：我細個學過 8 年芭蕾舞"></textarea>
+
+    <label data-i18n="lbl_select_lie">邊一句係【假話】？</label>
+    <select id="p-lie-index">
+      <option value="" disabled selected data-i18n="opt_lie_prompt">-- 請選擇邊一句係假話 --</option>
+      <option value="0" data-i18n="opt_lie_1">敘述 1 係假話 ❌</option>
+      <option value="1" data-i18n="opt_lie_2">敘述 2 係假話 ❌</option>
+      <option value="2" data-i18n="opt_lie_3">敘述 3 係假話 ❌</option>
+    </select>
+
+    <label data-i18n="lbl_story_desc">背後故事（揭曉時分享真話／點解會咁寫）：</label>
+    <textarea id="p-story" rows="3" data-i18n-ph="ph_story" placeholder="例如：點解會作出呢個假話？或者嗰兩件真事背後有咩好笑嘅細節？"></textarea>
+
+    <button class="btn" onclick="uiClientSubmit()" data-i18n="btn_submit">提交題目</button>
+  </section>
+
+  <!-- 6. 手機端：投票 (Vote) -->
+  <section id="view-player-vote" class="card view-section">
+    <div id="player-waiting-msg" class="waiting-box">
+      <h3 data-i18n="txt_submit_success">✅ 已成功連線！</h3>
+      <p class="text-muted" data-i18n="txt_wait_host_select">等待主持人點擊大螢幕名單開始...</p>
+    </div>
+    <div id="player-active-voting" class="is-hidden">
+      <h3><span data-i18n="lbl_target_person">當前主角</span>：<span id="vote-target-name" class="text-primary"></span></h3>
+      <div id="player-choices-box"></div>
+      <p id="player-voted-alert" class="voted-alert is-hidden" data-i18n="txt_vote_recorded">
+        已記錄投票！請睇大螢幕揭曉...
+      </p>
+    </div>
+  </section>
+
+  <!-- 7. 現場即時回顧 (Summary) -->
+  <section id="view-summary" class="card view-section">
+    <div class="badge badge-indigo" data-i18n="badge_summary">現場破冰總結</div>
+    <h2 id="summary-activity-heading" class="summary-title">🎉 本場精彩回顧</h2>
+    
+    <!-- 暖心收尾語 -->
+    <div class="closing-card">
+      <p class="closing-text"></p>
+    </div>
+
+    <p class="privacy-note" data-i18n="privacy_note">
+      🔒 <b>私隱保障：</b>本系統不設伺服器資料庫，此頁面關閉或重新整理後所有紀錄會自動銷毀。
+    </p>
+    <div id="summary-list"></div>
+  </section>
+</div>
+
+<!-- 依序載入：字典 -> 通訊底層 -> 業務UI邏輯 -->
+<script src="js/i18n.js"></script>
+<script src="js/p2p.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
