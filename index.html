@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="app_title">兩真一假 破冰對話 | Two Truths & A Lie</title>
   <link rel="stylesheet" href="css/style.css" />
-  <!-- 純前端 P2P 通訊（免伺服器、無資料庫存檔） -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -39,9 +38,8 @@
 
   <!-- 2. 主持人大廳 -->
   <section id="view-host-lobby" class="card view-section">
-    <!-- 主持人警告橫額 -->
     <div style="background:#fee2e2; border:1px solid #fca5a5; border-radius:8px; padding:10px; font-size:0.85rem; color:#991b1b; margin-bottom:12px;">
-      ⚠️ <b>主持人請勿重新整理或關閉此分頁！</b> 本機為全場唯一通訊核心，關閉後連線將立即中斷。
+      ⚠️ <b>主持人注意事項：</b> 請勿重新整理或關閉此分頁！筆電請接上電源線，並確保全體成員連上<b>同一個會議室 Wi-Fi</b>。
     </div>
 
     <details class="facilitator-guide">
@@ -108,6 +106,7 @@
 
     <label data-i18n="lbl_select_lie">哪一句是【假話】？</label>
     <select id="p-lie-index">
+      <option value="" disabled selected data-i18n="opt_lie_prompt">-- 請選擇哪一句是假話 --</option>
       <option value="0" data-i18n="opt_lie_1">敘述 1 是假話 ❌</option>
       <option value="1" data-i18n="opt_lie_2">敘述 2 是假話 ❌</option>
       <option value="2" data-i18n="opt_lie_3">敘述 3 是假話 ❌</option>
@@ -132,7 +131,7 @@
     </div>
   </section>
 
-  <!-- 7. 現場即時回顧（純本地顯示） -->
+  <!-- 7. 現場即時回顧 -->
   <section id="view-summary" class="card view-section">
     <div class="badge" style="background:#e0e7ff; color:#3730a3;">現場破冰總結</div>
     <h2 style="margin:6px 0;">🎉 本場精彩回顧</h2>
@@ -144,6 +143,7 @@
 </div>
 
 <script src="js/i18n.js"></script>
-<script src="js/p2p-standalone.js"></script>
+<script src="js/p2p.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
