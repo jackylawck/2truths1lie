@@ -1,43 +1,46 @@
 /* =========================================================================
- * 🎮 app.js - 培訓實戰完整對齊版
- * 串聯：投影模式切換、三段式變色計時器、即時未投名單比對、活動名堂
+ * 🎮 app.js - 業務邏輯與狀態機嚴格閉環版
+ * 包含：currentRound 生命週期管理、重連者豁免通行、雙語主題回顧
  * ========================================================================= */
 
-// 模組級核心狀態
 let clientName = '';
-let submissions = {};       // { peerId: { name, statements, lieIndex, story } }
-let currentRound = null;    // 當前主角數據
+let currentRoomId = '';
+let mySubmittedData = null;
+
+// 使用 sessionStorage 保持單一活動會話身份
+let myClientToken = sessionStorage.getItem('ice_client_token');
+if (!myClientToken) {
+  myClientToken = 'u_' + Math.random().toString(36).substring(2, 10);
+  sessionStorage.setItem('ice_client_token', myClientToken);
+}
+
+// Host 端狀態
+let sessionMap = {};        // { [clientToken]: peerId }
+let submissions = {};       // { [clientToken]: { name, statements, lieIndex, story } }
+let currentRound = null;    // { token, name, statements, lieIndex, story } (嚴格生命週期控制)
 let localVotes = { 0: 0, 1: 0, 2: 0 };
 let voteRecords = [];
-let votedPeers = new Set(); // 記錄本輪已投過票的 peerId
+let votedTokens = new Set();
 let timerInterval = null;
 let isPresentationMode = false;
 
-// 活動元數據（標題、主持人）
 window._activityMeta = {
   activityTitle: '團隊破冰對話',
   hostName: '主持人'
 };
 
-// 容錯防護
 if (typeof t !== 'function') {
   window.t = function(key) { return key; };
 }
 
-// 視圖路由切換
 function switchView(id) {
   document.querySelectorAll('.view-section, #view-landing').forEach((el) => {
     el.style.display = 'none';
   });
   const target = document.getElementById(id);
-  if (target) {
-    target.style.display = 'block';
-  } else {
-    console.error('[Router] 找不到目標視圖 ID:', id);
-  }
+  if (target) target.style.display = 'block';
 }
 
-// 🖥️ 投影模式切換（與 CSS body.presentation-mode 連動）
 function togglePresentationMode() {
   isPresentationMode = !isPresentationMode;
   document.body.classList.toggle('presentation-mode', isPresentationMode);
@@ -50,19 +53,17 @@ function togglePresentationMode() {
 }
 
 // =========================================================================
-// 🏠 Host 主持人流程
+// 🏠 Host 端處理流程
 // =========================================================================
 
 function uiSetupHost() {
   try {
-    // 讀取活動名稱與主持人暱稱
     const titleInp = document.getElementById('setup-activity-title')?.value.trim();
     const hostInp = document.getElementById('setup-host-name')?.value.trim();
 
     window._activityMeta.activityTitle = titleInp || t('default_activity_title');
     window._activityMeta.hostName = hostInp || t('txt_host_prefix').replace('：', '').replace(':', '');
 
-    // 更新大廳與遊戲畫面的主持標籤
     const bannerTitle = document.getElementById('host-banner-title');
     const bannerHost = document.getElementById('host-banner-host');
     const gameHostTag = document.getElementById('game-host-name');
@@ -83,43 +84,86 @@ function uiSetupHost() {
       const qrUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
       if (typeof QRCode !== 'undefined') {
         new QRCode(qrContainer, { text: qrUrl, width: 130, height: 130 });
-      } else {
-        qrContainer.innerHTML = `<p class="text-sm text-danger">${t('txt_room_id')}: ${roomId}</p>`;
       }
     }
 
-    if (typeof initHostPeer === 'function') {
-      initHostPeer(
-        roomId,
-        (data, conn) => handleHostReceiveData(data, conn),
-        (count) => {
-          const cntEl = document.getElementById('host-count');
-          if (cntEl) cntEl.innerText = count;
+    initHostPeer(
+      roomId,
+      (data, conn) => handleHostReceiveData(data, conn),
+      (count) => {
+        const cntEl = document.getElementById('host-count');
+        if (cntEl) cntEl.innerText = count;
+      },
+      (disconnectedPeerId) => {
+        // 連線關閉時同步清理 sessionMap 條目
+        for (const [token, pid] of Object.entries(sessionMap)) {
+          if (pid === disconnectedPeerId) {
+            delete sessionMap[token];
+            break;
+          }
         }
-      );
-    } else {
-      alert('p2p.js 載入異常，請確認檔案路徑。');
-    }
+      }
+    );
   } catch (err) {
     console.error('進入主持人模式失敗:', err);
     alert('建立房間出錯: ' + err.message);
   }
 }
 
-// 主持人接收手機端通訊
 function handleHostReceiveData(data, conn) {
+  // 1. 握手識別 (IDENTIFY)
+  if (data.type === 'IDENTIFY') {
+    const isKnownSession = sessionMap[data.clientToken] !== undefined;
+    const currentActiveSessions = Object.keys(sessionMap).length;
+    const limit = window.MAX_PARTICIPANTS || 15;
+
+    // 🎯 重連者優先：新訪客超額才拒絕，舊人歸隊直接換線放行
+    if (!isKnownSession && currentActiveSessions >= limit) {
+      try { conn.send({ type: 'ROOM_FULL' }); } catch (e) {}
+      setTimeout(() => {
+        dropOldClientConn(conn.peer);
+      }, 300);
+      return;
+    }
+
+    const oldPeerId = sessionMap[data.clientToken];
+    if (oldPeerId && oldPeerId !== conn.peer) {
+      dropOldClientConn(oldPeerId);
+    }
+    sessionMap[data.clientToken] = conn.peer;
+
+    // 🎯 嚴格狀態管理：只有在 currentRound 確實「活著」時才回送，大廳中絕不誤送舊題
+    if (currentRound && conn.open) {
+      try {
+        conn.send({
+          type: 'START_ROUND',
+          name: currentRound.name,
+          statements: currentRound.statements
+        });
+      } catch (e) {
+        console.warn('[IDENTIFY] 回送 START_ROUND 失敗:', e);
+      }
+    }
+    return;
+  }
+
+  // 2. 題目提交
   if (data.type === 'SUBMIT') {
-    submissions[conn.peer] = {
+    sessionMap[data.clientToken] = conn.peer;
+    submissions[data.clientToken] = {
       name: data.name,
       statements: data.statements,
       lieIndex: data.lieIndex,
       story: data.story
     };
     renderLobbyRoster();
-  } else if (data.type === 'VOTE') {
-    // 透過 votedPeers 去重防止重複刷票
-    if (!votedPeers.has(conn.peer)) {
-      votedPeers.add(conn.peer);
+    return;
+  }
+
+  // 3. 投票接收
+  if (data.type === 'VOTE') {
+    if (!votedTokens.has(data.clientToken)) {
+      votedTokens.add(data.clientToken);
       localVotes[data.choice] = (localVotes[data.choice] || 0) + 1;
       renderHostVoteDisplay();
       updateVoteProgressUI();
@@ -127,7 +171,6 @@ function handleHostReceiveData(data, conn) {
   }
 }
 
-// 渲染大廳人員卡片
 function renderLobbyRoster() {
   const grid = document.getElementById('host-player-grid');
   const tip = document.getElementById('host-empty-tip');
@@ -137,20 +180,20 @@ function renderLobbyRoster() {
   const list = Object.entries(submissions);
   if (list.length > 0 && tip) tip.style.display = 'none';
 
-  list.forEach(([peerId, sub]) => {
+  list.forEach(([token, sub]) => {
     const chip = document.createElement('div');
     chip.className = 'player-chip ready';
     chip.innerHTML = `<b>${sub.name}</b><br><small class="text-muted text-sm">${t('txt_chip_ready')}</small>`;
-    chip.onclick = () => hostStartRound(peerId, sub);
+    chip.onclick = () => hostStartRound(token, sub);
     grid.appendChild(chip);
   });
 }
 
-// 主持人點擊開題
-function hostStartRound(peerId, sub) {
-  currentRound = { peerId, ...sub };
+function hostStartRound(token, sub) {
+  // 🎯 狀態誕生
+  currentRound = { token, ...sub };
   localVotes = { 0: 0, 1: 0, 2: 0 };
-  votedPeers.clear();
+  votedTokens.clear();
 
   switchView('view-host-game');
 
@@ -165,7 +208,6 @@ function hostStartRound(peerId, sub) {
   if (btnBack) btnBack.classList.add('is-hidden');
   if (storyBox) storyBox.classList.add('is-hidden');
 
-  // 渲染選項卡片（使用 CSS class，零內聯樣式）
   const box = document.getElementById('host-statements-display');
   if (box) {
     box.innerHTML = '';
@@ -181,13 +223,9 @@ function hostStartRound(peerId, sub) {
     });
   }
 
-  // 初始化進度條與未投名單
   updateVoteProgressUI();
-
-  // 啟動 90 秒三段式計時器 (30s黃 / 0s紅)
   startSoftTimer(90);
 
-  // 廣播給手機開猜
   broadcastToAll({
     type: 'START_ROUND',
     name: sub.name,
@@ -195,14 +233,10 @@ function hostStartRound(peerId, sub) {
   });
 }
 
-// 🎯 即時計算投票進度與未投同仁名單（連動 CSS .vote-progress-bar）
 function updateVoteProgressUI() {
-  const eligiblePeers = (typeof clients !== 'undefined') 
-    ? Object.keys(clients).filter(p => p !== currentRound?.peerId)
-    : [];
-
-  const total = eligiblePeers.length;
-  const count = votedPeers.size;
+  const eligibleTokens = Object.keys(submissions).filter(t => t !== currentRound?.token);
+  const total = eligibleTokens.length;
+  const count = votedTokens.size;
 
   const totalEl = document.getElementById('host-total-voters');
   const votedEl = document.getElementById('host-voted-count');
@@ -216,9 +250,9 @@ function updateVoteProgressUI() {
       pendingEl.innerText = t('txt_all_voted');
       pendingEl.style.color = 'var(--tick-green)';
     } else {
-      const pendingNames = eligiblePeers
-        .filter(p => !votedPeers.has(p))
-        .map(p => submissions[p]?.name || '神秘同仁');
+      const pendingNames = eligibleTokens
+        .filter(t => !votedTokens.has(t))
+        .map(t => submissions[t]?.name || '同仁');
 
       if (pendingNames.length > 0) {
         pendingEl.innerText = `（${pendingNames.join('、')} ${t('txt_pending_suffix')}）`;
@@ -237,7 +271,6 @@ function renderHostVoteDisplay() {
   });
 }
 
-// 🎯 三段式節奏軟計時器（連動 CSS .soft-timer-fill.warning / .critical）
 function startSoftTimer(duration) {
   if (timerInterval) clearInterval(timerInterval);
   let remain = duration;
@@ -272,10 +305,9 @@ function startSoftTimer(duration) {
   }, 1000);
 }
 
-// 揭曉答案
 function hostRevealCurrent() {
   if (!currentRound) return;
-  if (timerInterval) clearInterval(timerInterval); // 揭曉時停錶
+  if (timerInterval) clearInterval(timerInterval);
 
   const btnReveal = document.getElementById('btn-host-reveal');
   const btnBack = document.getElementById('btn-host-back');
@@ -287,7 +319,6 @@ function hostRevealCurrent() {
   if (storyBox) storyBox.classList.remove('is-hidden');
   if (storyContent) storyContent.innerText = currentRound.story || t('lbl_no_records');
 
-  // 選項紅綠著色
   [0, 1, 2].forEach((idx) => {
     const card = document.getElementById(`host-card-${idx}`);
     if (card) {
@@ -299,7 +330,6 @@ function hostRevealCurrent() {
     }
   });
 
-  // 寫入本場回顧紀錄
   voteRecords.push({
     name: currentRound.name,
     statements: currentRound.statements,
@@ -309,7 +339,6 @@ function hostRevealCurrent() {
     fooled: localVotes[currentRound.lieIndex] || 0
   });
 
-  // 廣播給手機端揭曉
   broadcastToAll({
     type: 'REVEAL',
     lieIndex: currentRound.lieIndex
@@ -318,9 +347,11 @@ function hostRevealCurrent() {
 
 function uiBackToLobby() {
   switchView('view-host-lobby');
-  if (currentRound?.peerId) {
-    delete submissions[currentRound.peerId];
+  if (currentRound?.token) {
+    delete submissions[currentRound.token];
   }
+  // 🎯 狀態死亡：返回大廳，徹底宣告本輪已死
+  currentRound = null;
   renderLobbyRoster();
 }
 
@@ -328,11 +359,16 @@ function uiHostEndActivity() {
   const confirmed = confirm(t('confirm_end_activity'));
   if (!confirmed) return;
 
+  if (typeof releaseUnloadWarning === 'function') {
+    releaseUnloadWarning();
+  }
+
+  // 🎯 狀態死亡：結束活動，清除輪次狀態
+  currentRound = null;
   broadcastToAll({ type: 'ENDED' });
   renderLocalSummary();
 }
 
-// 🎯 活動回顧渲染：串聯活動名堂與動態收尾語
 function renderLocalSummary() {
   switchView('view-summary');
 
@@ -378,7 +414,7 @@ function renderLocalSummary() {
 }
 
 // =========================================================================
-// 📱 Client 參與者端流程
+// 📱 Client 端處理流程
 // =========================================================================
 
 function uiSetupPlayer() {
@@ -393,11 +429,11 @@ function uiSetupPlayer() {
 function uiConnectAsClient(e) {
   if (e && e.preventDefault) e.preventDefault();
 
-  const roomId = document.getElementById('join-room-id')?.value.trim();
+  currentRoomId = document.getElementById('join-room-id')?.value.trim();
   clientName = document.getElementById('join-player-name')?.value.trim();
   const btn = document.querySelector('#view-player-join .btn');
 
-  if (!roomId || !clientName) {
+  if (!currentRoomId || !clientName) {
     alert(t('err_room_id'));
     return;
   }
@@ -407,14 +443,37 @@ function uiConnectAsClient(e) {
     btn.innerText = t('btn_joining');
   }
 
+  startClientConnection(btn, false);
+}
+
+function startClientConnection(btn, isReconnect = false) {
   initClientPeer(
-    roomId,
+    currentRoomId,
     () => {
       if (btn) {
         btn.disabled = false;
         btn.innerText = t('btn_join');
       }
-      switchView('view-player-write');
+
+      // 握手 IDENTIFY
+      sendToHost({
+        type: 'IDENTIFY',
+        clientToken: myClientToken,
+        name: clientName
+      });
+
+      // 鎖屏重連：若已出過題，直接回送題目備份並切到投票等待
+      if (isReconnect && mySubmittedData) {
+        sendToHost({
+          type: 'SUBMIT',
+          clientToken: myClientToken,
+          name: clientName,
+          ...mySubmittedData
+        });
+        switchView('view-player-vote');
+      } else {
+        switchView('view-player-write');
+      }
     },
     (data) => handleClientReceiveData(data),
     () => {
@@ -422,7 +481,10 @@ function uiConnectAsClient(e) {
         btn.disabled = false;
         btn.innerText = t('btn_join');
       }
-      alert(t('alert_disconnected'));
+      const wantReconnect = confirm(t('confirm_reconnect'));
+      if (wantReconnect) {
+        startClientConnection(btn, true);
+      }
     },
     () => {
       if (btn) {
@@ -453,13 +515,23 @@ function uiClientSubmit() {
 
   const lieIndex = parseInt(lieValue, 10);
 
-  sendToHost({
-    type: 'SUBMIT',
-    name: clientName,
+  mySubmittedData = {
     statements: [s0, s1, s2],
     lieIndex: lieIndex,
     story: story
+  };
+
+  const ok = sendToHost({
+    type: 'SUBMIT',
+    clientToken: myClientToken,
+    name: clientName,
+    ...mySubmittedData
   });
+
+  if (!ok) {
+    alert('題目傳送失敗，請確認與主持人連線是否正常。');
+    return;
+  }
 
   switchView('view-player-vote');
 }
@@ -476,7 +548,6 @@ function handleClientReceiveData(data) {
     if (alertMsg) alertMsg.classList.add('is-hidden');
     if (targetName) targetName.innerText = data.name;
 
-    // 渲染手機端選項（高度受 CSS #player-choices-box 限制，絕不滑出螢幕）
     const box = document.getElementById('player-choices-box');
     if (box) {
       box.innerHTML = '';
@@ -486,7 +557,17 @@ function handleClientReceiveData(data) {
         card.id = `p-card-${idx}`;
         card.innerText = `#${idx + 1}. ${stmt}`;
         card.onclick = () => {
-          sendToHost({ type: 'VOTE', choice: idx });
+          const sent = sendToHost({
+            type: 'VOTE',
+            clientToken: myClientToken,
+            choice: idx
+          });
+
+          if (!sent) {
+            alert('投票傳送失敗，請嘗試點擊重試。');
+            return;
+          }
+
           document.querySelectorAll('#player-choices-box .choice-card').forEach((c, i) => {
             c.onclick = null;
             if (i === idx) c.classList.add('selected');
@@ -512,7 +593,6 @@ function handleClientReceiveData(data) {
   }
 }
 
-// 僅在網址帶有 ?room= 時才跳轉參與端
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   if (params.has('room') && params.get('room').trim() !== '') {
