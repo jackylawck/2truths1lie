@@ -1,5 +1,5 @@
 /* =========================================================================
- * 🎮 app.js - 前端交互、渲染與破冰遊戲流程
+ * 🎮 app.js - 前端交互、渲染與破冰遊戲流程 (防崩潰修復版)
  * ========================================================================= */
 let clientName = '';
 let submissions = {};
@@ -7,30 +7,60 @@ let currentRound = null;
 let localVotes = { 0: 0, 1: 0, 2: 0 };
 let voteRecords = [];
 
+// 萬一 i18n 沒載入成功時的 fallback 防護
+if (typeof t !== 'function') {
+  window.t = function(key) { return key; };
+}
+
 function switchView(id) {
+  // 隱藏所有視圖
   document.querySelectorAll('.view-section, #view-landing').forEach((el) => {
     el.style.display = 'none';
   });
   const target = document.getElementById(id);
-  if (target) target.style.display = 'block';
+  if (target) {
+    target.style.display = 'block';
+  } else {
+    console.error("找不到視圖 ID:", id);
+  }
 }
 
 // ----------------- Host 主持人流程 -----------------
 function uiSetupHost() {
-  switchView('view-host-lobby');
-  const roomId = Math.floor(10000000 + Math.random() * 90000000).toString();
-  document.getElementById('host-room-id').innerText = roomId;
+  try {
+    switchView('view-host-lobby');
+    const roomId = Math.floor(10000000 + Math.random() * 90000000).toString();
+    const roomIdEl = document.getElementById('host-room-id');
+    if (roomIdEl) roomIdEl.innerText = roomId;
 
-  const qrUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
-  new QRCode(document.getElementById('host-qr'), { text: qrUrl, width: 130, height: 130 });
-
-  initHostPeer(
-    roomId,
-    (data, conn) => handleHostReceiveData(data, conn),
-    (count) => {
-      document.getElementById('host-count').innerText = count;
+    const qrContainer = document.getElementById('host-qr');
+    if (qrContainer) {
+      qrContainer.innerHTML = ''; // 清空舊的 QR Code
+      const qrUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+      // 防呆：如果 QRCode CDN 掛了也不要中斷遊戲
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(qrContainer, { text: qrUrl, width: 130, height: 130 });
+      } else {
+        qrContainer.innerHTML = `<p style="font-size:0.8rem; color:red;">QR碼套件載入失敗，請直接輸入上方 8 位數房號</p>`;
+      }
     }
-  );
+
+    if (typeof initHostPeer === 'function') {
+      initHostPeer(
+        roomId,
+        (data, conn) => handleHostReceiveData(data, conn),
+        (count) => {
+          const cntEl = document.getElementById('host-count');
+          if (cntEl) cntEl.innerText = count;
+        }
+      );
+    } else {
+      alert("p2p.js 尚未加載成功，請確認檔案路徑！");
+    }
+  } catch (err) {
+    console.error("進入主持人模式失敗:", err);
+    alert("進入主持人模式出錯: " + err.message);
+  }
 }
 
 function handleHostReceiveData(data, conn) {
@@ -51,6 +81,7 @@ function handleHostReceiveData(data, conn) {
 function renderLobbyRoster() {
   const grid = document.getElementById('host-player-grid');
   const tip = document.getElementById('host-empty-tip');
+  if (!grid) return;
   grid.innerHTML = '';
   const list = Object.entries(submissions);
   if (list.length > 0 && tip) tip.style.display = 'none';
@@ -107,10 +138,12 @@ function hostRevealCurrent() {
 
   [0, 1, 2].forEach((idx) => {
     const card = document.getElementById(`host-card-${idx}`);
-    if (idx === currentRound.lieIndex) {
-      card.classList.add('is-lie');
-    } else {
-      card.classList.add('is-truth');
+    if (card) {
+      if (idx === currentRound.lieIndex) {
+        card.classList.add('is-lie');
+      } else {
+        card.classList.add('is-truth');
+      }
     }
   });
 
@@ -143,6 +176,7 @@ function uiHostEndActivity() {
 function renderLocalSummary() {
   switchView('view-summary');
   const container = document.getElementById('summary-list');
+  if (!container) return;
   container.innerHTML = '';
 
   if (voteRecords.length === 0) {
@@ -173,14 +207,16 @@ function uiSetupPlayer() {
   switchView('view-player-join');
   const params = new URLSearchParams(window.location.search);
   if (params.get('room')) {
-    document.getElementById('join-room-id').value = params.get('room');
+    const inp = document.getElementById('join-room-id');
+    if (inp) inp.value = params.get('room');
   }
 }
 
-function uiConnectAsClient() {
+function uiConnectAsClient(e) {
+  if (e && e.preventDefault) e.preventDefault();
   const roomId = document.getElementById('join-room-id').value.trim();
   clientName = document.getElementById('join-player-name').value.trim();
-  const btn = event?.target || document.querySelector('#view-player-join .btn');
+  const btn = document.querySelector('#view-player-join .btn');
 
   if (!roomId || !clientName) {
     alert(t('err_room_id'));
@@ -286,9 +322,10 @@ function handleClientReceiveData(data) {
   }
 }
 
+// 頁面初始化：僅在有 room 參數時才切換到參與者視圖
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('room')) {
+  if (params.has('room') && params.get('room').trim() !== '') {
     uiSetupPlayer();
   }
 });
