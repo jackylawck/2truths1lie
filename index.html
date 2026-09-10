@@ -42,6 +42,28 @@
 
     <button class="btn" onclick="uiSetupHost()" data-i18n="btn_as_host">我是主持人（電腦開房投屏）</button>
     <button class="btn btn-secondary" onclick="uiSetupPlayer()" data-i18n="btn_as_player">我是參與者（手機掃碼）</button>
+
+    <!-- 企業級資料私隱與治理合規聲明 (PDPO / GDPR / ISO Alignment) -->
+    <details class="compliance-statement">
+      <summary>🔒 資料私隱與架構聲明 | Privacy & Architecture Notice</summary>
+      <div class="compliance-body">
+        <div class="compliance-block">
+          <b>【繁體中文】資料私隱與安全承諾</b>
+          <p>1. <b>零後端儲存（Zero-Persistence）</b>：本系統採用純瀏覽器記憶體運作，不設資料庫，不記錄伺服器日誌。所有暱稱與分享內容僅於活動期間在主持人及參與者本機瀏覽器內暫存，關閉分頁即刻徹底銷毀。</p>
+          <p>2. <b>點對點加密傳輸</b>：數據透過 WebRTC 技術（DTLS/SRTP）直接於設備間點對點加密傳送，無第三方可窺探內容。</p>
+          <p>3. <b>法規原則合規</b>：本設計遵循香港《個人資料（私隱）條例》（PDPO，第486章）保障資料原則，以及歐盟《通用資料保護條例》（GDPR）之「從設計著手保護私隱（Privacy by Design）」與資料最小化標準，契合 ISO 27001/27701 資訊安全與私隱原則。</p>
+          <p>4. <b>不涉及 AI 模型</b>：本工具純屬即時通訊互動工具，不包含任何 AI 或機器學習模型，亦絕不用於任何資料探勘或模型訓練。</p>
+        </div>
+        <hr class="divider-subtle" />
+        <div class="compliance-block">
+          <b>【English】Privacy & Security Commitment</b>
+          <p>1. <b>Zero-Persistence Architecture</b>: Operating entirely within volatile browser memory (RAM), this application maintains no database and records no server logs. All inputs evaporate permanently once the browser tab is closed.</p>
+          <p>2. <b>End-to-End P2P Encryption</b>: All transmissions leverage WebRTC (DTLS/SRTP) peer-to-peer encrypted channels, ensuring no intermediary data exposure.</p>
+          <p>3. <b>Regulatory Alignment</b>: Purpose-built in alignment with the Data Protection Principles of the HK PDPO (Cap. 486), EU GDPR (Privacy by Design & Data Minimisation), and ISO 27001/27701 information security standards.</p>
+          <p>4. <b>No AI / Machine Learning</b>: This interactive utility utilizes no AI models; participant inputs are never ingested, analyzed, or leveraged for model training.</p>
+        </div>
+      </div>
+    </details>
   </section>
 
   <!-- 2. 主持人大廳 (Host Lobby) -->
