@@ -1,0 +1,56 @@
+/* --- 培訓引導層樣式擴充 --- */
+
+/* 主持人折疊腳本面板 */
+.facilitator-guide {
+  background: #f8fafc;
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.85rem;
+  color: #334155;
+  margin-bottom: 12px;
+}
+.facilitator-guide summary {
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--primary);
+  outline: none;
+}
+.guide-content { margin-top: 8px; line-height: 1.4; }
+
+/* 溫和計時條 (灰色系/低壓迫，時間到自然顯示 00:00，不發出嗶聲) */
+.soft-timer-wrap {
+  margin: 10px 0 16px 0;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.soft-timer-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.soft-timer-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.soft-timer-fill {
+  height: 100%;
+  background: #94a3b8;
+  width: 100%;
+  transition: width 1s linear;
+}
+
+/* Debrief 引導盒 */
+.debrief-box {
+  margin-top: 14px;
+  padding: 12px;
+  background: #eff6ff;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+}
