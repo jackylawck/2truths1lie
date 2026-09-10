@@ -1,4 +1,4 @@
-# 🎭 兩真一假 破冰對話 | Two Truths & A Lie
+# 🎭 兩真一假 | Two Truths & A Lie
 
 > **面向企業培訓與迎新活動的純前端、無痕私隱、點對點（P2P）破冰 Web 應用程式**  
 > **An Ephemeral, Privacy-by-Design, Peer-to-Peer (P2P) Icebreaker Web App for Enterprise Training & Onboarding**
