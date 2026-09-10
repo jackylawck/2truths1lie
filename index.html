@@ -5,29 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="app_title">兩真一假 破冰對話 | Two Truths & A Lie</title>
   <link rel="stylesheet" href="css/style.css" />
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
 <div class="container">
   <header class="header">
-    <h1 data-i18n="app_title">兩真一假 破冰對話</h1>
-    <button class="btn-outline" onclick="toggleLanguage()" id="lang-switch-btn">EN</button>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <h1 data-i18n="app_title" style="margin:0;">兩真一假 破冰對話</h1>
+      <span id="net-badge" class="badge badge-net">離線</span>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button class="btn-outline" onclick="SystemLogger.exportLogs()">📋 日誌</button>
+      <button class="btn-outline" onclick="toggleLanguage()" id="lang-switch-btn">EN</button>
+    </div>
   </header>
 
-  <!-- 1. 角色選擇 -->
+  <!-- 離線單機模式提示條 -->
+  <div id="offline-banner" class="offline-banner" style="display:none;">
+    ⚡ 目前處於【現場單機模式】：網路不穩或中斷，已切換為大螢幕手動點擊記票！
+  </div>
+
+  <!-- 1. 角色選擇入口 -->
   <section id="view-landing" class="card">
     <p style="color:var(--text-muted);" data-i18n="landing_desc">請選擇您的角色進入遊戲：</p>
-    <button class="btn" onclick="setupHost()" data-i18n="btn_as_host">我是主持人（大螢幕 / 投屏）</button>
-    <button class="btn btn-secondary" onclick="setupPlayer()" data-i18n="btn_as_player">我是參與者（手機端）</button>
+    <button class="btn" onclick="uiSetupHost()" data-i18n="btn_as_host">我是主持人（大螢幕 / 投屏）</button>
+    <button class="btn btn-secondary" onclick="uiSetupPlayer()" data-i18n="btn_as_player">我是參與者（手機端）</button>
   </section>
 
-  <!-- 2. 主持人大廳 (Lobby + 引導折疊面板) -->
+  <!-- 2. 主持人大廳 -->
   <section id="view-host-lobby" class="card view-section">
-    <!-- 🎛️ 引導面板 1: 主持人隨身提詞板 (Facilitator Cheatsheet) -->
     <details class="facilitator-guide">
-      <summary data-i18n="guide_summary">🎙️ 主持人引導提詞板（點擊展開 30 秒腳本與契約）</summary>
+      <summary data-i18n="guide_summary">🎙️ 主持人引導提詞板（點擊展開 30 秒腳本與安全契約）</summary>
       <div class="guide-content">
         <p><b>🗣️ 開場 30 秒（安全契約）：</b><br>
           <span data-i18n="guide_script_opening">「今天我們純粹認識彼此有趣的一面。規則很簡單：2 真 1 假。大家可以自由選擇出題、只猜不說，或者只當聽眾。不想回答隨時說『Pass』，嚴禁查家宅！」</span>
@@ -54,21 +64,19 @@
     <div id="host-player-grid" class="player-grid"></div>
     <p id="host-empty-tip" class="empty-tip" data-i18n="txt_waiting_submissions">⏳ 等待大家進入或提交「2真1假」...</p>
 
-    <!-- 終場延伸按鈕 -->
-    <button id="btn-end-session" class="btn btn-outline" style="margin-top:20px; width:100%; border-color:#94a3b8; color:#475569;" onclick="triggerWrapUp()" data-i18n="btn_wrap_up">
-      🎉 圓滿結束遊戲，派發「會後連結卡」至全員手機
+    <button class="btn btn-outline" style="margin-top:20px; width:100%; border-color:#94a3b8; color:#475569;" onclick="hostEndRoom()" data-i18n="btn_wrap_up">
+      🎉 圓滿結束遊戲，產生永久總結回顧
     </button>
   </section>
 
-  <!-- 3. 主持人展示 (含溫和計時器 + Debrief 引導卡) -->
+  <!-- 3. 主持人展示 (含溫和計時器與 Debrief) -->
   <section id="view-host-game" class="card view-section">
     <div class="badge" data-i18n="badge_guessing">當前環節：猜猜誰是假話</div>
     <h2 style="margin:6px 0;"><span id="host-current-name" style="color:var(--primary);"></span> <span data-i18n="txt_sharing_suffix">的個人分享</span></h2>
     
-    <!-- 溫和計時條 (Soft Timer: 90 秒自然流逝，無壓迫警報) -->
     <div class="soft-timer-wrap">
       <div class="soft-timer-label">
-        <span data-i18n="lbl_chat_time">自由提問交流時間 (建議 90s)</span>
+        <span data-i18n="lbl_chat_time">提問交流時間 (建議 90s)</span>
         <span id="host-timer-text">01:30</span>
       </div>
       <div class="soft-timer-bar"><div id="host-timer-fill" class="soft-timer-fill"></div></div>
@@ -76,23 +84,21 @@
 
     <div id="host-statements-display"></div>
 
-    <button id="btn-host-reveal" class="btn btn-success" onclick="revealHostAnswer()" data-i18n="btn_reveal">揭曉答案 (Tick & Cross)</button>
-    <button id="btn-host-back" class="btn btn-secondary" style="display:none;" onclick="backToHostLobby()" data-i18n="btn_next_person">返回名單大廳（下一位）</button>
+    <button id="btn-host-reveal" class="btn btn-success" onclick="hostRevealRound()" data-i18n="btn_reveal">揭曉答案 (Tick & Cross)</button>
+    <button id="btn-host-back" class="btn btn-secondary" style="display:none;" onclick="uiBackToLobby()" data-i18n="btn_next_person">返回名單大廳（下一位）</button>
 
-    <!-- 揭曉背後故事 -->
     <div id="host-story-box" class="story-box" style="display:none;">
       <h4 style="margin:0 0 4px 0; color:#166534;" data-i18n="lbl_story_title">背後故事分享：</h4>
       <p id="host-story-content" style="margin:0; font-size:0.95rem;"></p>
     </div>
 
-    <!-- 🎛️ 引導面板 2: 揭曉後的 Debrief 浮現小卡 -->
     <div id="host-debrief-box" class="debrief-box" style="display:none;">
       <b data-i18n="debrief_title">💬 主持人隨機銜接（挑一題聊聊）：</b>
       <ul id="debrief-questions-list" style="margin:4px 0 0 0; padding-left:18px; font-size:0.9rem;"></ul>
     </div>
   </section>
 
-  <!-- 4. 參與者端：連線與角色梯度選擇 (Participation Gradient) -->
+  <!-- 4. 參與者端：連線與模式選擇 -->
   <section id="view-player-join" class="card view-section">
     <h2 data-i18n="title_join_room">加入迎新房間</h2>
     <label data-i18n="lbl_room_code">房間代碼 (8 位數)：</label>
@@ -100,18 +106,16 @@
     <label data-i18n="lbl_nickname">你的名字 / 稱呼：</label>
     <input type="text" id="join-player-name" placeholder="例如：Alex / 詠思" />
 
-    <!-- 梯度選擇 -->
     <label data-i18n="lbl_join_mode">今日參與方式：</label>
     <select id="join-mode-select">
-      <option value="full" data-i18n="opt_mode_full">🌟 我想出題並參與投票</option>
-      <option value="vote_only" data-i18n="opt_mode_vote">🙋 我只想猜題投票（暫不出題）</option>
+      <option value="player" data-i18n="opt_mode_full">🌟 我想出題並參與投票</option>
       <option value="spectator" data-i18n="opt_mode_listen">👂 我只想旁聽放鬆（純觀眾）</option>
     </select>
 
-    <button class="btn" onclick="connectToHost()" data-i18n="btn_join">連線進入</button>
+    <button class="btn" onclick="uiConnectToRoom()" data-i18n="btn_join">連線進入</button>
   </section>
 
-  <!-- 5. 參與者端：出題介面 (含手機版防呆輸入) -->
+  <!-- 5. 參與者端：出題介面 -->
   <section id="view-player-write" class="card view-section">
     <div class="badge" data-i18n="badge_write_truths">填寫你的 2 真 1 假</div>
     <div class="tips-box">
@@ -139,7 +143,7 @@
     <label data-i18n="lbl_story_desc">背後故事（揭曉時同大家分享）：</label>
     <textarea id="p-story" rows="2" placeholder="簡單交代背景..."></textarea>
 
-    <button class="btn" onclick="submitToRoom()" data-i18n="btn_submit">提交給大螢幕大廳</button>
+    <button class="btn" onclick="uiSubmitStatements()" data-i18n="btn_submit">提交至房間保險箱</button>
   </section>
 
   <!-- 6. 參與者端：投票介面 -->
@@ -159,18 +163,262 @@
       </p>
     </div>
 
-    <!-- 🎛️ 引導面板 3: 48小時會後連結卡 (Connection Wrap-up Card) -->
-    <div id="player-wrap-up-card" style="display:none; margin-top:20px; border-top:1px dashed var(--border); padding-top:14px;">
-      <div class="badge" style="background:#e0e7ff; color:#3730a3;" data-i18n="badge_connection">🤝 破冰延伸：會後連結卡</div>
-      <p style="font-size:0.9rem; margin:6px 0;" data-i18n="txt_connection_desc">記住剛才讓你印象最深的同事，隨時在 Slack / Teams 找他喝杯咖啡：</p>
-      <textarea id="wrap-up-text" rows="3" style="font-size:0.85rem; color:#475569;"></textarea>
-      <button class="btn btn-secondary" onclick="copySlackText()" data-i18n="btn_copy_slack">📋 一鍵複製訊息 (貼至 Slack / Teams)</button>
-    </div>
+    <!-- 故障轉移接管按鈕 -->
+    <button id="btn-claim-host" class="btn" style="display:none; background:#d97706; margin-top:20px;" onclick="claimHostOwnership()">
+      ⚠️ 原主持人連線中斷逾時，點擊接管房間
+    </button>
+  </section>
+
+  <!-- 7. 活動回顧永久快照視圖 -->
+  <section id="view-summary" class="card view-section">
+    <div class="badge" style="background:#e0e7ff; color:#3730a3;">🤝 活動總結與破冰連結</div>
+    <h2 style="margin:6px 0;">活動精彩回顧</h2>
+    <p style="font-size:0.85rem; color:var(--text-muted);">本頁面永久保存，可複製下方連結與團隊回味：</p>
+    <input type="text" id="summary-permalink" readonly onclick="this.select();" style="background:#f1f5f9; font-size:0.85rem;" />
+    
+    <div id="summary-list" style="margin-top:16px;"></div>
   </section>
 </div>
 
 <script src="js/i18n.js"></script>
-<script src="js/p2p.js"></script>
-<script src="js/app.js"></script>
+<script src="js/realtime-cloud.js"></script>
+<script>
+  // UI 橋接與介面控制邏輯
+  function switchView(viewId) {
+    document.querySelectorAll('.view-section, #view-landing').forEach(el => el.style.display = 'none');
+    const target = document.getElementById(viewId);
+    if (target) target.style.display = 'block';
+  }
+
+  function updateNetworkBadge(status) {
+    const b = document.getElementById('net-badge');
+    if (!b) return;
+    b.className = 'badge badge-net ' + status;
+    b.innerText = status === 'connected' ? '連線' : (status === 'reconnecting' ? '重連中' : '離線');
+  }
+
+  function triggerOfflineFallback() {
+    document.getElementById('offline-banner').style.display = 'block';
+    // 解鎖 Host 本地手動累加點擊
+    document.querySelectorAll('.choice-card').forEach((card, idx) => {
+      card.onclick = () => {
+        localRoomSnapshot.vote_summary = localRoomSnapshot.vote_summary || { "0": 0, "1": 0, "2": 0 };
+        localRoomSnapshot.vote_summary[idx] = (localRoomSnapshot.vote_summary[idx] || 0) + 1;
+        renderVoteSummary(localRoomSnapshot.vote_summary);
+      };
+    });
+  }
+
+  function dismissOfflineFallback() {
+    document.getElementById('offline-banner').style.display = 'none';
+  }
+
+  async function uiSetupHost() {
+    switchView('view-host-lobby');
+    const rand = Math.floor(10000000 + Math.random() * 90000000).toString();
+    document.getElementById('host-room-id').innerText = rand;
+
+    const qrUrl = `${window.location.origin}${window.location.pathname}?room=${rand}`;
+    new QRCode(document.getElementById("host-qr"), { text: qrUrl, width: 130, height: 130 });
+
+    await hostCreateRoom(rand, '主持人');
+  }
+
+  function uiSetupPlayer() {
+    switchView('view-player-join');
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('room')) {
+      document.getElementById('join-room-id').value = params.get('room');
+    }
+  }
+
+  async function uiConnectToRoom() {
+    const roomId = document.getElementById('join-room-id').value.trim();
+    const name = document.getElementById('join-player-name').value.trim();
+    const role = document.getElementById('join-mode-select').value;
+
+    if (!roomId || !name) {
+      alert(t('err_room_id'));
+      return;
+    }
+
+    await clientJoinRoom(roomId, name, role);
+    if (role === 'player') {
+      switchView('view-player-write');
+    } else {
+      switchView('view-player-vote');
+    }
+  }
+
+  async function uiSubmitStatements() {
+    const s0 = document.getElementById('p-stmt-0').value.trim();
+    const s1 = document.getElementById('p-stmt-1').value.trim();
+    const s2 = document.getElementById('p-stmt-2').value.trim();
+    const lie = parseInt(document.getElementById('p-lie-index').value);
+    const story = document.getElementById('p-story').value.trim();
+
+    if (!s0 || !s1 || !s2) {
+      alert(t('err_fill_all'));
+      return;
+    }
+
+    const success = await clientSubmitStatements([s0, s1, s2], lie, story);
+    if (success) switchView('view-player-vote');
+  }
+
+  async function refreshActiveMembersUI() {
+    const activeThreshold = new Date(Date.now() - 30000).toISOString();
+    const { data: members } = await supabase
+      .from('room_members')
+      .select('*')
+      .eq('room_id', currentRoomId)
+      .gt('last_seen', activeThreshold);
+
+    const grid = document.getElementById('host-player-grid');
+    const tip = document.getElementById('host-empty-tip');
+    const countEl = document.getElementById('host-count');
+    if (!grid) return;
+
+    const list = members || [];
+    if (countEl) countEl.innerText = list.length;
+    if (list.length > 0 && tip) tip.style.display = 'none';
+
+    grid.innerHTML = '';
+    list.forEach(m => {
+      const chip = document.createElement('div');
+      chip.className = `player-chip ${m.has_submitted ? 'ready' : ''}`;
+      chip.innerHTML = `<b>${m.display_name}</b><br><small>${m.has_submitted ? '已就緒 💬' : '填寫中...'}</small>`;
+      if (m.has_submitted && isHost) {
+        chip.onclick = async () => {
+          const { data: sub } = await supabase.from('submissions').select('*').eq('room_id', currentRoomId).eq('user_id', m.user_id).single();
+          if (sub) hostStartRound(sub);
+        };
+      }
+      grid.appendChild(chip);
+    });
+  }
+
+  function renderHostNewRound(room) {
+    switchView('view-host-game');
+    document.getElementById('host-current-name').innerText = room.current_presenter;
+    document.getElementById('btn-host-reveal').style.display = 'block';
+    document.getElementById('btn-host-back').style.display = 'none';
+    document.getElementById('host-story-box').style.display = 'none';
+    document.getElementById('host-debrief-box').style.display = 'none';
+
+    const box = document.getElementById('host-statements-display');
+    box.innerHTML = '';
+    (room.statements || []).forEach((stmt, idx) => {
+      const card = document.createElement('div');
+      card.className = 'choice-card';
+      card.id = `host-card-${idx}`;
+      card.innerHTML = `
+        <b>#${idx + 1}. ${stmt}</b>
+        <span class="result-badge" id="host-badge-${idx}"></span>
+        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;" id="host-vote-count-${idx}">0 票</div>
+      `;
+      box.appendChild(card);
+    });
+
+    startSoftTimer(90);
+  }
+
+  function renderClientNewRound(room) {
+    switchView('view-player-vote');
+    document.getElementById('player-waiting-msg').style.display = 'none';
+    document.getElementById('player-active-voting').style.display = 'block';
+    document.getElementById('player-voted-alert').style.display = 'none';
+    document.getElementById('vote-target-name').innerText = room.current_presenter;
+
+    const box = document.getElementById('player-choices-box');
+    box.innerHTML = '';
+    (room.statements || []).forEach((stmt, idx) => {
+      const card = document.createElement('div');
+      card.className = 'choice-card';
+      card.id = `player-card-${idx}`;
+      card.innerText = `#${idx + 1}. ${stmt}`;
+      card.onclick = () => castVote(idx);
+      box.appendChild(card);
+    });
+  }
+
+  function renderHostReveal(room) {
+    document.getElementById('btn-host-reveal').style.display = 'none';
+    document.getElementById('btn-host-back').style.display = 'block';
+    document.getElementById('host-story-box').style.display = 'block';
+    document.getElementById('host-story-content').innerText = room.story || '無特別說明';
+
+    (room.statements || []).forEach((_, idx) => {
+      const card = document.getElementById(`host-card-${idx}`);
+      const badge = document.getElementById(`host-badge-${idx}`);
+      if (idx === room.lie_index) {
+        if (card) card.classList.add('is-lie');
+        if (badge) { badge.innerText = t('txt_lie_badge'); badge.style.color = 'var(--cross-red)'; }
+      } else {
+        if (card) card.classList.add('is-truth');
+        if (badge) { badge.innerText = t('txt_truth_badge'); badge.style.color = 'var(--tick-green)'; }
+      }
+    });
+
+    const debriefBox = document.getElementById('host-debrief-box');
+    const debriefList = document.getElementById('debrief-questions-list');
+    debriefList.innerHTML = `<li>${t('debrief_q1')}</li><li>${t('debrief_q2')}</li>`;
+    debriefBox.style.display = 'block';
+  }
+
+  function renderClientReveal(room) {
+    (room.statements || []).forEach((_, idx) => {
+      const card = document.getElementById(`player-card-${idx}`);
+      if (card) {
+        card.onclick = null;
+        if (idx === room.lie_index) {
+          card.classList.add('is-lie');
+          card.innerText += ` ${t('txt_lie_badge')}`;
+        } else {
+          card.classList.add('is-truth');
+          card.innerText += ` ${t('txt_truth_badge')}`;
+        }
+      }
+    });
+  }
+
+  function renderVoteSummary(voteSummary) {
+    [0, 1, 2].forEach(idx => {
+      const el = document.getElementById(`host-vote-count-${idx}`);
+      if (el) el.innerText = `${voteSummary[idx] || 0} 票`;
+    });
+  }
+
+  function lockLocalVoteUI(choice) {
+    document.querySelectorAll('#player-choices-box .choice-card').forEach((c, idx) => {
+      c.classList.toggle('selected', idx === choice);
+      c.onclick = null;
+    });
+    document.getElementById('player-voted-alert').style.display = 'block';
+  }
+
+  function uiBackToLobby() {
+    switchView('view-host-lobby');
+    refreshActiveMembersUI();
+  }
+
+  let timerInterval = null;
+  function startSoftTimer(duration) {
+    if (timerInterval) clearInterval(timerInterval);
+    let remain = duration;
+    const fill = document.getElementById('host-timer-fill');
+    const txt = document.getElementById('host-timer-text');
+    fill.style.width = '100%';
+
+    timerInterval = setInterval(() => {
+      remain--;
+      if (remain <= 0) { clearInterval(timerInterval); remain = 0; }
+      const m = Math.floor(remain / 60).toString().padStart(2, '0');
+      const s = (remain % 60).toString().padStart(2, '0');
+      txt.innerText = `${m}:${s}`;
+      fill.style.width = `${(remain / duration) * 100}%`;
+    }, 1000);
+  }
+</script>
 </body>
 </html>
