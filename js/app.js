@@ -1,30 +1,30 @@
 /* =========================================================================
- * 🎮 app.js - 狀態閉環與工程極致版
- * 徹底縫合 HTML 斷點：動態元數據、投影切換、投票名單即時比對、零內聯樣式
+ * 🎮 app.js - 培訓實戰完整對齊版
+ * 串聯：投影模式切換、三段式變色計時器、即時未投名單比對、活動名堂
  * ========================================================================= */
 
 // 模組級核心狀態
 let clientName = '';
 let submissions = {};       // { peerId: { name, statements, lieIndex, story } }
-let currentRound = null;    // { peerId, name, statements, lieIndex, story }
+let currentRound = null;    // 當前主角數據
 let localVotes = { 0: 0, 1: 0, 2: 0 };
 let voteRecords = [];
-let votedPeers = new Set(); // 🎯 斷點 2 修復：追蹤本輪已投票的 peerId
+let votedPeers = new Set(); // 記錄本輪已投過票的 peerId
 let timerInterval = null;
 let isPresentationMode = false;
 
-// 🎯 斷點 1 & 4 修復：活動全域元數據（名稱、主持人）
+// 活動元數據（標題、主持人）
 window._activityMeta = {
   activityTitle: '團隊破冰對話',
   hostName: '主持人'
 };
 
-// 容錯防護：i18n 未就緒時的安全 Fallback
+// 容錯防護
 if (typeof t !== 'function') {
   window.t = function(key) { return key; };
 }
 
-// 通用視圖切換
+// 視圖路由切換
 function switchView(id) {
   document.querySelectorAll('.view-section, #view-landing').forEach((el) => {
     el.style.display = 'none';
@@ -37,7 +37,7 @@ function switchView(id) {
   }
 }
 
-// 🎯 斷點 3 修復：實作投影模式切換函式
+// 🖥️ 投影模式切換（與 CSS body.presentation-mode 連動）
 function togglePresentationMode() {
   isPresentationMode = !isPresentationMode;
   document.body.classList.toggle('presentation-mode', isPresentationMode);
@@ -50,18 +50,19 @@ function togglePresentationMode() {
 }
 
 // =========================================================================
-// 🏠 Host 主持人業務流
+// 🏠 Host 主持人流程
 // =========================================================================
 
 function uiSetupHost() {
   try {
-    // 🎯 斷點 1 修復：主動讀取活動名稱與主持人稱呼，同步至大廳橫額
+    // 讀取活動名稱與主持人暱稱
     const titleInp = document.getElementById('setup-activity-title')?.value.trim();
     const hostInp = document.getElementById('setup-host-name')?.value.trim();
 
     window._activityMeta.activityTitle = titleInp || t('default_activity_title');
     window._activityMeta.hostName = hostInp || t('txt_host_prefix').replace('：', '').replace(':', '');
 
+    // 更新大廳與遊戲畫面的主持標籤
     const bannerTitle = document.getElementById('host-banner-title');
     const bannerHost = document.getElementById('host-banner-host');
     const gameHostTag = document.getElementById('game-host-name');
@@ -105,7 +106,7 @@ function uiSetupHost() {
   }
 }
 
-// 主持人接收手機端數據（題目提交 / 投票紀錄）
+// 主持人接收手機端通訊
 function handleHostReceiveData(data, conn) {
   if (data.type === 'SUBMIT') {
     submissions[conn.peer] = {
@@ -116,7 +117,7 @@ function handleHostReceiveData(data, conn) {
     };
     renderLobbyRoster();
   } else if (data.type === 'VOTE') {
-    // 🎯 斷點 2 修復：透過 votedPeers 去重，避免一人多投
+    // 透過 votedPeers 去重防止重複刷票
     if (!votedPeers.has(conn.peer)) {
       votedPeers.add(conn.peer);
       localVotes[data.choice] = (localVotes[data.choice] || 0) + 1;
@@ -126,7 +127,7 @@ function handleHostReceiveData(data, conn) {
   }
 }
 
-// 渲染大廳就緒人員卡片
+// 渲染大廳人員卡片
 function renderLobbyRoster() {
   const grid = document.getElementById('host-player-grid');
   const tip = document.getElementById('host-empty-tip');
@@ -139,13 +140,13 @@ function renderLobbyRoster() {
   list.forEach(([peerId, sub]) => {
     const chip = document.createElement('div');
     chip.className = 'player-chip ready';
-    chip.innerHTML = `<b>${sub.name}</b><br><small class="text-muted text-sm">${t('txt_submit_success')}</small>`;
+    chip.innerHTML = `<b>${sub.name}</b><br><small class="text-muted text-sm">${t('txt_chip_ready')}</small>`;
     chip.onclick = () => hostStartRound(peerId, sub);
     grid.appendChild(chip);
   });
 }
 
-// 主持人點擊人員開題
+// 主持人點擊開題
 function hostStartRound(peerId, sub) {
   currentRound = { peerId, ...sub };
   localVotes = { 0: 0, 1: 0, 2: 0 };
@@ -164,7 +165,7 @@ function hostStartRound(peerId, sub) {
   if (btnBack) btnBack.classList.add('is-hidden');
   if (storyBox) storyBox.classList.add('is-hidden');
 
-  // 🎯 關注點分離優化：拔除 innerHTML 內的 style="..."
+  // 渲染選項卡片（使用 CSS class，零內聯樣式）
   const box = document.getElementById('host-statements-display');
   if (box) {
     box.innerHTML = '';
@@ -180,13 +181,13 @@ function hostStartRound(peerId, sub) {
     });
   }
 
-  // 🎯 斷點 2 修復：初始化投票進度條與未投名單
+  // 初始化進度條與未投名單
   updateVoteProgressUI();
 
-  // 啟動 90 秒三段式計時器
+  // 啟動 90 秒三段式計時器 (30s黃 / 0s紅)
   startSoftTimer(90);
 
-  // 廣播給所有手機開猜
+  // 廣播給手機開猜
   broadcastToAll({
     type: 'START_ROUND',
     name: sub.name,
@@ -194,10 +195,12 @@ function hostStartRound(peerId, sub) {
   });
 }
 
-// 🎯 斷點 2 修復：即時更新投票進度條與未投人員名單
+// 🎯 即時計算投票進度與未投同仁名單（連動 CSS .vote-progress-bar）
 function updateVoteProgressUI() {
-  // 排除主角本人後的應投票清單
-  const eligiblePeers = Object.keys(clients).filter(p => p !== currentRound?.peerId);
+  const eligiblePeers = (typeof clients !== 'undefined') 
+    ? Object.keys(clients).filter(p => p !== currentRound?.peerId)
+    : [];
+
   const total = eligiblePeers.length;
   const count = votedPeers.size;
 
@@ -213,7 +216,6 @@ function updateVoteProgressUI() {
       pendingEl.innerText = t('txt_all_voted');
       pendingEl.style.color = 'var(--tick-green)';
     } else {
-      // 比對找出尚未投票的暱稱
       const pendingNames = eligiblePeers
         .filter(p => !votedPeers.has(p))
         .map(p => submissions[p]?.name || '神秘同仁');
@@ -228,7 +230,6 @@ function updateVoteProgressUI() {
   }
 }
 
-// 更新大螢幕票數文字
 function renderHostVoteDisplay() {
   [0, 1, 2].forEach((idx) => {
     const el = document.getElementById(`h-cnt-${idx}`);
@@ -236,7 +237,7 @@ function renderHostVoteDisplay() {
   });
 }
 
-// 90 秒軟計時器 (30s 轉黃, 0s 轉紅)
+// 🎯 三段式節奏軟計時器（連動 CSS .soft-timer-fill.warning / .critical）
 function startSoftTimer(duration) {
   if (timerInterval) clearInterval(timerInterval);
   let remain = duration;
@@ -271,10 +272,10 @@ function startSoftTimer(duration) {
   }, 1000);
 }
 
-// 主持人揭曉本輪真假
+// 揭曉答案
 function hostRevealCurrent() {
   if (!currentRound) return;
-  if (timerInterval) clearInterval(timerInterval);
+  if (timerInterval) clearInterval(timerInterval); // 揭曉時停錶
 
   const btnReveal = document.getElementById('btn-host-reveal');
   const btnBack = document.getElementById('btn-host-back');
@@ -286,7 +287,7 @@ function hostRevealCurrent() {
   if (storyBox) storyBox.classList.remove('is-hidden');
   if (storyContent) storyContent.innerText = currentRound.story || t('lbl_no_records');
 
-  // 卡片著色
+  // 選項紅綠著色
   [0, 1, 2].forEach((idx) => {
     const card = document.getElementById(`host-card-${idx}`);
     if (card) {
@@ -298,7 +299,7 @@ function hostRevealCurrent() {
     }
   });
 
-  // 封存至回顧紀錄
+  // 寫入本場回顧紀錄
   voteRecords.push({
     name: currentRound.name,
     statements: currentRound.statements,
@@ -308,14 +309,13 @@ function hostRevealCurrent() {
     fooled: localVotes[currentRound.lieIndex] || 0
   });
 
-  // 廣播給手機揭曉
+  // 廣播給手機端揭曉
   broadcastToAll({
     type: 'REVEAL',
     lieIndex: currentRound.lieIndex
   });
 }
 
-// 返回大廳（清算已開題者）
 function uiBackToLobby() {
   switchView('view-host-lobby');
   if (currentRound?.peerId) {
@@ -324,23 +324,23 @@ function uiBackToLobby() {
   renderLobbyRoster();
 }
 
-// 主持人結束活動
 function uiHostEndActivity() {
+  const confirmed = confirm(t('confirm_end_activity'));
+  if (!confirmed) return;
+
   broadcastToAll({ type: 'ENDED' });
   renderLocalSummary();
 }
 
-// 🎯 斷點 4 修復：回顧標題串聯活動名堂，動態調適收尾文案，拔除內聯樣式
+// 🎯 活動回顧渲染：串聯活動名堂與動態收尾語
 function renderLocalSummary() {
   switchView('view-summary');
 
-  // 串聯專屬活動名堂
   const heading = document.getElementById('summary-activity-heading');
   if (heading && window._activityMeta) {
     heading.innerText = `🎉 ${window._activityMeta.activityTitle} ${t('txt_summary_suffix')}`;
   }
 
-  // 智慧調適收尾語
   const closingTextEl = document.querySelector('.closing-text');
   if (closingTextEl && window._activityMeta) {
     const isWelcome = /迎新|新同事|onboarding|new joiner/i.test(window._activityMeta.activityTitle);
@@ -356,7 +356,6 @@ function renderLocalSummary() {
     return;
   }
 
-  // 🎯 拔除 JS 內聯樣式，全數採用 CSS Utility Classes
   voteRecords.forEach((r) => {
     const card = document.createElement('div');
     card.className = 'summary-card';
@@ -379,7 +378,7 @@ function renderLocalSummary() {
 }
 
 // =========================================================================
-// 📱 Client 參與者業務流
+// 📱 Client 參與者端流程
 // =========================================================================
 
 function uiSetupPlayer() {
@@ -477,6 +476,7 @@ function handleClientReceiveData(data) {
     if (alertMsg) alertMsg.classList.add('is-hidden');
     if (targetName) targetName.innerText = data.name;
 
+    // 渲染手機端選項（高度受 CSS #player-choices-box 限制，絕不滑出螢幕）
     const box = document.getElementById('player-choices-box');
     if (box) {
       box.innerHTML = '';
@@ -512,7 +512,7 @@ function handleClientReceiveData(data) {
   }
 }
 
-// 頁面初始化：僅在有房號參數時自動導向參賽端
+// 僅在網址帶有 ?room= 時才跳轉參與端
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   if (params.has('room') && params.get('room').trim() !== '') {
