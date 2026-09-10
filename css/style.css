@@ -1,6 +1,6 @@
 /* =========================================================================
  * 🎨 style.css - 企業級現代實戰版
- * 含：1200px 投影寬幅、單手 52vh 零滑動防爆版、深色模式、三段計時器、無內聯樣式支援
+ * 含：1200px 投影寬幅、單手 52vh 零滑動防爆版、深色模式、三段計時器、合規折疊框
  * ========================================================================= */
 
 :root {
@@ -53,6 +53,8 @@
   .badge-indigo { background: #312e81; color: #c7d2fe; }
   .closing-card { background: #1e1b4b; border-color: #4338ca; color: #c7d2fe; }
   .activity-banner { background: #1e293b; border-color: #334155; }
+  .compliance-statement { background: #0f172a; border-color: #334155; color: #94a3b8; }
+  .compliance-statement summary { color: #cbd5e1; }
 }
 
 * {
@@ -174,6 +176,48 @@ body {
   text-align: center;
 }
 .closing-text { margin: 0; font-size: 0.95rem; line-height: 1.5; color: #3730a3; font-weight: 500; }
+
+/* 企業級資料私隱與架構聲明框樣式 */
+.compliance-statement {
+  margin-top: 16px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.compliance-statement summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #475569;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.compliance-statement summary::-webkit-details-marker {
+  display: none;
+}
+.compliance-statement summary::after {
+  content: '＋';
+  font-size: 1rem;
+}
+.compliance-statement[open] summary::after {
+  content: '−';
+}
+.compliance-body {
+  margin-top: 10px;
+  line-height: 1.5;
+}
+.compliance-block p {
+  margin: 4px 0;
+}
+.divider-subtle {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 10px 0;
+}
 
 /* 按鈕風格與微回饋 */
 .btn {
