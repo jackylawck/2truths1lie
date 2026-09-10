@@ -96,6 +96,7 @@ const I18N_DICT = {
 
     // 系統提示、彈窗與防呆
     confirm_end_activity: "確定要結束本場活動嗎？結束後將產生現場總結，當前房間將無法繼續投票。",
+    confirm_reconnect: "⚠️ 與主持人連線中斷（可能因手機休眠鎖屏）。是否立即重新連線？",
     err_fill_all: "請填妥 3 句陳述！",
     err_select_lie: "請明確選擇邊一句係【假話】！",
     err_room_id: "請輸入 8 位數房號與姓名！",
@@ -199,6 +200,7 @@ const I18N_DICT = {
 
     // Alerts
     confirm_end_activity: "Are you sure you want to wrap up this session? This will finalize the summary and voting will be closed.",
+    confirm_reconnect: "⚠️ Connection to facilitator lost (likely due to screen lock). Reconnect now?",
     err_fill_all: "Please fill in all 3 statements!",
     err_select_lie: "Please specify which statement is the LIE!",
     err_room_id: "Please enter an 8-digit Room ID and your name!",
@@ -214,7 +216,7 @@ let currentLang = 'zh';
 function setLanguage(lang) {
   currentLang = lang;
 
-  // 1. 文字替換
+  // 1. 純文字替換
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
     if (I18N_DICT[lang] && I18N_DICT[lang][key]) {
