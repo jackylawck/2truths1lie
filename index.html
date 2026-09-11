@@ -1,9 +1,66 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-HK" prefix="og: https://ogp.me/ns#">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="app_title">🎭 兩真一假 | Two Truths & A Lie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
+  
+  <!-- 🔍 Google 站長驗證 -->
+  <meta name="google-site-verification" content="JZ5UohX-CcP_fQV0_DI9VadkKY4ZoTTkUifL88-fIcY" />
+
+  <!-- 🔍 基礎 SEO 核心標籤 -->
+  <title>🎭 兩真一假 破冰對話 | Two Truths & A Lie (P2P 企業迎新與培訓互動)</title>
+  <meta name="description" content="專為企業迎新、團隊建設與培訓工作坊設計的純前端 P2P 破冰應用。無後端、零資料庫持久化、點對點端到端加密，關閉分頁即刻徹底銷毀紀錄，符合香港 PDPO、歐盟 GDPR 及 ISO 27001 私隱標準。" />
+  <meta name="keywords" content="兩真一假, Two Truths and a Lie, 迎新破冰, Team Building, 培訓工具, 企業培訓, P2P, WebRTC, PeerJS, 私隱優先, 零留存, PWA" />
+  <meta name="author" content="Jacky Law" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://jackylawck.github.io/2truths1lie/" />
+
+  <!-- 🌐 Open Graph / Facebook / LinkedIn / WhatsApp 社交分享卡片 -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jackylawck.github.io/2truths1lie/" />
+  <meta property="og:title" content="🎭 兩真一假 破冰對話 | 企業級無痕 P2P 互動工具" />
+  <meta property="og:description" content="零資料庫留存、DTLS 點對點加密、手機掃碼即玩。讓新同仁在安全、有趣的氛圍下真誠交流！" />
+  <meta property="og:image" content="https://jackylawck.github.io/2truths1lie/2truths1lie512icon.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:image:alt" content="兩真一假破冰對話標誌" />
+  <meta property="og:locale" content="zh_HK" />
+  <meta property="og:site_name" content="兩真一假 破冰對話" />
+
+  <!-- 🐦 Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="🎭 兩真一假 破冰對話 | Two Truths & A Lie" />
+  <meta name="twitter:description" content="企業培訓與迎新利器！純前端 WebRTC 點對點通訊，資料不經第三方伺服器，私隱保障滿分。" />
+  <meta name="twitter:image" content="https://jackylawck.github.io/2truths1lie/2truths1lie512icon.png" />
+
+  <!-- 📱 PWA 與手機桌面圖示支援 (Add to Home Screen) -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="2truths1lie192icon.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="2truths1lie512icon.png" />
+  <link rel="apple-touch-icon" href="2truths1lie192icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="兩真一假" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="application-name" content="兩真一假 破冰對話" />
+
+  <!-- 🛡️ 企業級資安策略：Content Security Policy (CSP) 與設備權限最小化 -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com;
+    connect-src 'self' wss://*.peerjs.com https://*.peerjs.com https://unpkg.com;
+    img-src 'self' data: blob: https://jackylawck.github.io;
+    style-src 'self' 'unsafe-inline';
+    font-src 'self' data:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+  " />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), display-capture=()" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -13,7 +70,7 @@
 <div class="container">
   <header class="header">
     <div class="header-brand">
-      <h1 data-i18n="app_title"><span class="brand-icon">🎭</span>兩真一假</h1>
+      <h1 data-i18n="app_title"><span class="brand-icon">🎭</span>兩真一假 破冰對話</h1>
       <span id="net-badge" class="badge badge-net" data-i18n="net_badge_standalone">純內聯無存檔</span>
     </div>
     <div class="header-actions">
@@ -24,6 +81,28 @@
 
   <!-- 1. 入口選單 (Landing) -->
   <section id="view-landing" class="card">
+    
+    <!-- 🌟 首頁生動圖案：對話框 + 兩真一假 (2 剔 1 叉) -->
+    <div class="hero-illustration-wrap">
+      <svg class="hero-illustration" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 40 20 H 280 A 24 24 0 0 1 304 44 V 126 A 24 24 0 0 1 280 150 H 195 L 195 170 L 175 150 H 40 A 24 24 0 0 1 16 126 V 44 A 24 24 0 0 1 40 20 Z" 
+              class="svg-bubble-outer" />
+        <g transform="translate(42, 45)">
+          <path d="M 38 0 A 38 38 0 1 1 15 67 L 7 80 L 19 69 A 38 38 0 0 1 38 0 Z" class="svg-bubble-inner" />
+          <path d="M 23 38 L 33 48 L 53 25" fill="none" stroke="#2563eb" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+        <g transform="translate(122, 25)">
+          <path d="M 38 0 A 38 38 0 1 1 15 67 L 7 80 L 19 69 A 38 38 0 0 1 38 0 Z" class="svg-bubble-inner" />
+          <path d="M 23 38 L 33 48 L 53 25" fill="none" stroke="#334155" class="svg-check-dark" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+        <g transform="translate(202, 45)">
+          <path d="M 38 0 A 38 38 0 1 1 15 67 L 7 80 L 19 69 A 38 38 0 0 1 38 0 Z" class="svg-bubble-inner" />
+          <line x1="26" y1="26" x2="50" y2="50" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" />
+          <line x1="50" y1="26" x2="26" y2="50" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" />
+        </g>
+      </svg>
+    </div>
+
     <p class="section-lead" data-i18n="landing_desc">今日想以咩角色加入？</p>
     
     <div class="info-box">
@@ -33,17 +112,16 @@
       </p>
     </div>
 
-    <!-- 活動專屬名堂與主持名稱選填 -->
+    <!-- 安全限制長度 maxlength -->
     <label class="lbl-compact" data-i18n="lbl_setup_title">活動主題 / 班別（選填）：</label>
-    <input type="text" id="setup-activity-title" data-i18n-ph="ph_setup_title" placeholder="例如：新同事迎新會" />
+    <input type="text" id="setup-activity-title" maxlength="40" data-i18n-ph="ph_setup_title" placeholder="例如：2026 Q1 新同事迎新會" />
 
     <label class="lbl-compact" data-i18n="lbl_setup_host">主持人稱呼（選填）：</label>
-    <input type="text" id="setup-host-name" data-i18n-ph="ph_setup_host" placeholder="例如：Jarvis" />
+    <input type="text" id="setup-host-name" maxlength="20" data-i18n-ph="ph_setup_host" placeholder="例如：Jacky" />
 
     <button class="btn" onclick="uiSetupHost()" data-i18n="btn_as_host">我是主持人（電腦開房投屏）</button>
     <button class="btn btn-secondary" onclick="uiSetupPlayer()" data-i18n="btn_as_player">我是參與者（手機掃碼）</button>
 
-    <!-- 企業級資料私隱與治理合規聲明 (PDPO / GDPR / ISO Alignment) -->
     <details class="compliance-statement">
       <summary>🔒 資料私隱與架構聲明 | Privacy & Architecture Notice</summary>
       <div class="compliance-body">
@@ -72,20 +150,17 @@
       ⚠️ <b>主持人注意事項：</b> 請勿重新整理或關閉此分頁！筆電請接上電源線，並確保全體成員連上<b>同一個會議室 Wi-Fi</b>。
     </div>
 
-    <!-- 活動專屬橫額 -->
     <div class="activity-banner">
       <h2 id="host-banner-title" class="activity-title" data-i18n="default_activity_title">團隊破冰對話</h2>
-      <p id="host-banner-host" class="activity-host"><span data-i18n="txt_host_prefix">現場主持：</span>Jarvis</p>
+      <p id="host-banner-host" class="activity-host"><span data-i18n="txt_host_prefix">現場主持：</span>Jacky</p>
     </div>
 
-    <!-- 動線 1: 先掃碼進場 -->
     <div class="qr-panel">
       <h3 class="room-display"><span data-i18n="txt_room_id">房號</span>：<span id="host-room-id" class="text-primary">...</span></h3>
       <div id="host-qr"></div>
       <p class="qr-hint" data-i18n="txt_qr_hint">手機掃碼或輸入 8 位數連線（上限 15 人）</p>
     </div>
 
-    <!-- 動線 2: 再看 30 秒開場契約 -->
     <details class="facilitator-guide">
       <summary data-i18n="guide_summary">🎙️ 主持人引導提詞板（30秒開場契約）</summary>
       <div class="guide-content">
@@ -95,7 +170,6 @@
 
     <hr class="divider" />
 
-    <!-- 動線 3: 關注進場名單 -->
     <div class="lobby-header">
       <b data-i18n="lbl_player_roster">已就緒名單（點擊名字開題）：</b>
       <span class="text-muted text-sm"><span data-i18n="txt_online">在線人數</span>: <b id="host-count">0</b> / 15</span>
@@ -112,12 +186,11 @@
   <section id="view-host-game" class="card view-section">
     <div class="game-top-bar">
       <div class="badge" data-i18n="badge_guessing">當前環節：估下邊句係假話</div>
-      <span class="game-host-tag">🎙️ <span data-i18n="txt_host_prefix">現場主持：</span><b id="game-host-name">Jarvis</b></span>
+      <span class="game-host-tag">🎙️ <span data-i18n="txt_host_prefix">現場主持：</span><b id="game-host-name">Jacky</b></span>
     </div>
 
     <h2 class="presenter-heading"><span id="host-current-name" class="text-primary"></span> <span data-i18n="txt_sharing_suffix">嘅個人分享</span></h2>
     
-    <!-- 90秒三段式軟計時器 -->
     <div class="soft-timer-wrap">
       <div class="soft-timer-label">
         <span data-i18n="lbl_chat_time">提問交流時間（建議 90 秒）</span>
@@ -126,16 +199,13 @@
       <div class="soft-timer-bar"><div id="host-timer-fill" class="soft-timer-fill"></div></div>
     </div>
 
-    <!-- 視覺焦點 1: 題目卡片 -->
     <div id="host-statements-display"></div>
 
-    <!-- 視覺焦點 2: 題目下方呈現投票進度 -->
     <div id="host-vote-progress" class="vote-progress-bar">
       <span data-i18n="lbl_voted_progress">已投票：</span><span id="host-voted-count">0</span> / <span id="host-total-voters">0</span> <span data-i18n="lbl_unit_people">人</span>
       <span id="host-pending-list" class="vote-pending-names"></span>
     </div>
 
-    <!-- 視覺焦點 3: 行動按鈕 -->
     <button id="btn-host-reveal" class="btn btn-success" onclick="hostRevealCurrent()" data-i18n="btn_reveal">揭曉答案</button>
     <button id="btn-host-back" class="btn btn-secondary is-hidden" onclick="uiBackToLobby()" data-i18n="btn_next_person">下一位主角</button>
 
@@ -149,9 +219,9 @@
   <section id="view-player-join" class="card view-section">
     <h2 data-i18n="title_join_room">加入迎新房間</h2>
     <label data-i18n="lbl_room_code">房間代碼（8 位數）：</label>
-    <input type="text" id="join-room-id" data-i18n-ph="ph_room_code" placeholder="例如：12345678" />
+    <input type="text" id="join-room-id" maxlength="8" pattern="\d*" data-i18n-ph="ph_room_code" placeholder="例如：12345678" />
     <label data-i18n="lbl_nickname">你嘅稱呼：</label>
-    <input type="text" id="join-player-name" data-i18n-ph="ph_nickname" placeholder="例如：Alex / 詠思" />
+    <input type="text" id="join-player-name" maxlength="20" data-i18n-ph="ph_nickname" placeholder="例如：Alex / 詠思" />
     <button class="btn" onclick="uiConnectAsClient()" data-i18n="btn_join">連線進入</button>
   </section>
 
@@ -169,13 +239,13 @@
     </div>
 
     <label data-i18n="lbl_stmt_1">敘述 1：</label>
-    <textarea id="p-stmt-0" rows="2" data-i18n-ph="ph_stmt_1" placeholder="例如：我完全唔識游水 / 我曾經見過發哥合照"></textarea>
+    <textarea id="p-stmt-0" rows="2" maxlength="100" data-i18n-ph="ph_stmt_1" placeholder="例如：我完全唔識游水 / 我曾經見過發哥合照"></textarea>
 
     <label data-i18n="lbl_stmt_2">敘述 2：</label>
-    <textarea id="p-stmt-1" rows="2" data-i18n-ph="ph_stmt_2" placeholder="例如：我每日一定要飲兩杯美式黑咖啡"></textarea>
+    <textarea id="p-stmt-1" rows="2" maxlength="100" data-i18n-ph="ph_stmt_2" placeholder="例如：我每日一定要飲兩杯美式黑咖啡"></textarea>
 
     <label data-i18n="lbl_stmt_3">敘述 3：</label>
-    <textarea id="p-stmt-2" rows="2" data-i18n-ph="ph_stmt_3" placeholder="例如：我細個學過 8 年芭蕾舞"></textarea>
+    <textarea id="p-stmt-2" rows="2" maxlength="100" data-i18n-ph="ph_stmt_3" placeholder="例如：我細個學過 8 年芭蕾舞"></textarea>
 
     <label data-i18n="lbl_select_lie">邊一句係【假話】？</label>
     <select id="p-lie-index">
@@ -186,7 +256,7 @@
     </select>
 
     <label data-i18n="lbl_story_desc">背後故事（揭曉時分享真話／點解會咁寫）：</label>
-    <textarea id="p-story" rows="3" data-i18n-ph="ph_story" placeholder="例如：點解會作出呢個假話？或者嗰兩件真事背後有咩好笑嘅細節？"></textarea>
+    <textarea id="p-story" rows="3" maxlength="300" data-i18n-ph="ph_story" placeholder="例如：點解會作出呢個假話？或者嗰兩件真事背後有咩好笑嘅細節？"></textarea>
 
     <button class="btn" onclick="uiClientSubmit()" data-i18n="btn_submit">提交題目</button>
   </section>
@@ -211,7 +281,6 @@
     <div class="badge badge-indigo" data-i18n="badge_summary">現場破冰總結</div>
     <h2 id="summary-activity-heading" class="summary-title">🎉 本場精彩回顧</h2>
     
-    <!-- 暖心收尾語 -->
     <div class="closing-card">
       <p class="closing-text"></p>
     </div>
@@ -223,7 +292,6 @@
   </section>
 </div>
 
-<!-- 依序載入：字典 -> 通訊底層 -> 業務UI邏輯 -->
 <script src="js/i18n.js"></script>
 <script src="js/p2p.js"></script>
 <script src="js/app.js"></script>
