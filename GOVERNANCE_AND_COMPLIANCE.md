@@ -110,6 +110,4 @@ Following a thorough regulatory scoping exercise, this application is **formally
   * Native escaping of all user-generated strings, neutralizing DOM-based XSS vectors.
   * Field-level payload truncation preventing buffer saturation and denial-of-service attempts.
 
----
-**簽發與核准 / Certified by:**  
-*Corporate Governance, Privacy & Risk Assurance Function*
+
