@@ -1,0 +1,25 @@
+{
+  "name": "兩真一假 破冰對話 | Two Truths & A Lie",
+  "short_name": "兩真一假",
+  "description": "企業迎新與培訓專用 P2P 無痕私隱破冰遊戲應用",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "2truths1lie192icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "2truths1lie512icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
