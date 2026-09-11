@@ -33,11 +33,11 @@
   <meta name="twitter:description" content="企業培訓與迎新利器！純前端 WebRTC 點對點通訊，資料不經第三方伺服器，私隱保障滿分。" />
   <meta name="twitter:image" content="https://jackylawck.github.io/2truths1lie/2truths1lie512icon.png" />
 
-  <!-- 📱 PWA 與手機桌面圖示支援 (Add to Home Screen) -->
+  <!-- 📱 PWA 與手機桌面圖示支援 (加 ?v=2 強制破除瀏覽器快取) -->
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/png" sizes="192x192" href="2truths1lie192icon.png" />
-  <link rel="icon" type="image/png" sizes="512x512" href="2truths1lie512icon.png" />
-  <link rel="apple-touch-icon" href="2truths1lie192icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="2truths1lie192icon.png?v=2" />
+  <link rel="icon" type="image/png" sizes="512x512" href="2truths1lie512icon.png?v=2" />
+  <link rel="apple-touch-icon" href="2truths1lie192icon.png?v=2" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="兩真一假" />
@@ -82,25 +82,9 @@
   <!-- 1. 入口選單 (Landing) -->
   <section id="view-landing" class="card">
     
-    <!-- 🌟 首頁生動圖案：對話框 + 兩真一假 (2 剔 1 叉) -->
+    <!-- 🌟 首頁生動圖案：直連已生成的精美 512x512 圖標，消除黑底問題 -->
     <div class="hero-illustration-wrap">
-      <svg class="hero-illustration" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 40 20 H 280 A 24 24 0 0 1 304 44 V 126 A 24 24 0 0 1 280 150 H 195 L 195 170 L 175 150 H 40 A 24 24 0 0 1 16 126 V 44 A 24 24 0 0 1 40 20 Z" 
-              class="svg-bubble-outer" />
-        <g transform="translate(42, 45)">
-          <path d="M 38 0 A 38 38 0 1 1 15 67 L 7 80 L 19 69 A 38 38 0 0 1 38 0 Z" class="svg-bubble-inner" />
-          <path d="M 23 38 L 33 48 L 53 25" fill="none" stroke="#2563eb" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
-        </g>
-        <g transform="translate(122, 25)">
-          <path d="M 38 0 A 38 38 0 1 1 15 67 L 7 80 L 19 69 A 38 38 0 0 1 38 0 Z" class="svg-bubble-inner" />
-          <path d="M 23 38 L 33 48 L 53 25" fill="none" stroke="#334155" class="svg-check-dark" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
-        </g>
-        <g transform="translate(202, 45)">
-          <path d="M 38 0 A 38 38 0 1 1 15 67 L 7 80 L 19 69 A 38 38 0 0 1 38 0 Z" class="svg-bubble-inner" />
-          <line x1="26" y1="26" x2="50" y2="50" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" />
-          <line x1="50" y1="26" x2="26" y2="50" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" />
-        </g>
-      </svg>
+      <img src="2truths1lie512icon.png?v=2" alt="兩真一假 破冰對話" class="hero-app-img" />
     </div>
 
     <p class="section-lead" data-i18n="landing_desc">今日想以咩角色加入？</p>
