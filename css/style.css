@@ -1,6 +1,6 @@
 /* =========================================================================
- * 🎨 style.css - 企業級現代實戰版
- * 含：1200px 投影寬幅、單手 52vh 零滑動防爆版、深色模式、三段計時器、合規折疊框
+ * 🎨 style.css - 企業級現代實戰版 (PWA 全螢幕 + 高清 App 圖標 + 資安防護)
+ * 含：1200px 投影寬幅、單手 52vh 零滑動防爆、深色模式、三段計時器、合規框
  * ========================================================================= */
 
 :root {
@@ -67,7 +67,8 @@ body {
   background: var(--bg);
   color: var(--text);
   margin: 0;
-  padding: 16px;
+  /* 📱 支援 iPhone 瀏海與動態島安全區 */
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   display: flex;
   justify-content: center;
   transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
@@ -86,6 +87,28 @@ body {
   box-shadow: var(--shadow-md);
   margin-bottom: 16px;
   transition: box-shadow 0.2s var(--ease-out);
+}
+
+/* 🌟 首頁高清 App 圖標樣式 (解決圖片無樣式撐爆與黑塊問題) */
+.hero-illustration-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 4px 0;
+}
+
+.hero-app-img {
+  width: 140px;
+  height: 140px;
+  border-radius: 28px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s var(--ease-out);
+  object-fit: cover;
+}
+
+.hero-app-img:hover {
+  transform: translateY(-3px) scale(1.02);
 }
 
 /* Header & Brand Icon */
@@ -195,6 +218,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .compliance-statement summary::-webkit-details-marker {
   display: none;
@@ -219,7 +244,7 @@ body {
   margin: 10px 0;
 }
 
-/* 按鈕風格與微回饋 */
+/* 按鈕風格與微回饋 (防手機長按誤選) */
 .btn {
   background: var(--primary);
   color: #fff;
@@ -233,6 +258,8 @@ body {
   margin-top: 8px;
   box-shadow: var(--shadow-sm);
   transition: all 0.15s var(--ease-out);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .btn:hover { background-color: var(--primary-hover); box-shadow: var(--shadow-md); }
 .btn:active { transform: scale(0.98); box-shadow: var(--shadow-sm); }
@@ -252,6 +279,8 @@ body {
   cursor: pointer;
   font-size: 0.85rem;
   transition: all 0.15s var(--ease-out);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .btn-outline:hover { background: rgba(0, 0, 0, 0.04); }
 .btn-outline:active { transform: scale(0.96); }
@@ -309,7 +338,7 @@ input:focus, select:focus, textarea:focus {
   color: #334155;
   margin-top: 14px;
 }
-.facilitator-guide summary { cursor: pointer; font-weight: bold; color: var(--primary); }
+.facilitator-guide summary { cursor: pointer; font-weight: bold; color: var(--primary); user-select: none; -webkit-user-select: none; }
 .guide-content { margin-top: 8px; line-height: 1.4; }
 
 /* 名單 Grid */
@@ -328,6 +357,8 @@ input:focus, select:focus, textarea:focus {
   text-align: center;
   box-shadow: var(--shadow-sm);
   transition: all 0.15s var(--ease-out);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .player-chip.ready { background: #eff6ff; border-color: var(--primary); cursor: pointer; }
 .player-chip.ready:hover { background: #dbeafe; transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -347,7 +378,7 @@ input:focus, select:focus, textarea:focus {
 }
 .presenter-heading { margin: 6px 0; font-size: 1.3rem; }
 
-/* 題目展示選項 */
+/* 題目展示選項 (防選取 + 平滑點擊) */
 .choice-card {
   background: #f8fafc;
   border: 2px solid var(--border);
@@ -359,6 +390,8 @@ input:focus, select:focus, textarea:focus {
   transition: all 0.15s var(--ease-out);
   position: relative;
   box-shadow: var(--shadow-sm);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .choice-card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .choice-card:active { transform: scale(0.99); }
@@ -478,6 +511,7 @@ body.presentation-mode .story-box { padding: 22px; font-size: 1.25rem; }
 body.presentation-mode .summary-card { padding: 24px; font-size: 1.2rem; }
 body.presentation-mode .player-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 body.presentation-mode .closing-text { font-size: 1.15rem; }
+body.presentation-mode .hero-app-img { width: 190px; height: 190px; border-radius: 38px; }
 
 /* 常駐切換按鈕 */
 .btn-toggle-presentation {
@@ -491,6 +525,8 @@ body.presentation-mode .closing-text { font-size: 1.15rem; }
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .btn-toggle-presentation:hover { background: #1e293b; }
 .btn-toggle-presentation.active { background: var(--primary); border-color: var(--primary); }
