@@ -30,14 +30,14 @@
 ---
 
 ### 🚀 核心功能與工程亮點
-* **無伺服器 P2P 星型通訊**：基於 PeerJS，由主持人筆電擔任本地房間通訊中心（上限 15 人），免除伺服器託管費用與資安疑慮。
+* **無伺服器 P2P 星型通訊**：基於 PeerJS，由主持人筆電擔任本地房間通訊中心（上限 20 人），免除伺服器託管費用與資安疑慮。
 * **會話 Token 身份解耦（Session Token Decoupling）**：
   * 將「業務身份（`clientToken`）」與「連線識別（`PeerID`）」徹底分離。
   * 手機鎖屏或休眠喚醒時，自動攜帶 Token 重連，**徹底消滅 WebRTC `unavailable-id` 競態問題**。
 * **啟動冪等防護鎖（Idempotent Launch Lock）**：底層限制單次 Peer 實例建立，防範並行雙重實例引致的幽靈 Socket 記憶體洩漏。
 * **狀態機嚴格閉環**：
   * 題目輪次（`currentRound`）誕生於主持人開題，嚴格銷毀於返回大廳或結案，**重連同仁絕不接收過期幽靈題目**。
-  * 滿員重連優先權：舊同仁重連直接換線放行，絕不被誤判為第 16 人阻擋。
+  * 滿員重連優先權：舊同仁重連直接換線放行，絕不被誤判為第 21 人阻擋。
 * **現場培訓師專屬設計**：
   * **🖥️ 1200px 投影模式**：一鍵全局文字與排版等比放大，百吋投影布幕最後一排清晰可見。
   * **手機端 52vh 零滑動佈局**：投票選項垂直均分可視區域，單手拿咖啡也能輕鬆點選。
@@ -133,7 +133,7 @@ Built in strict alignment with global data protection and technical governance s
 
 4. **AI Regulatory Scoping Verdict (EU AI Act & ISO/IEC 42001 Out-of-Scope)**:
 * Explicitly operating on **deterministic logic**, this tool uses **zero AI/ML models, executes zero automated decisions, and never ingests personal data for training**, formally exempted from AI regulatory compliance frameworks.
-* *For the full governance dossier, refer to [`GOVERNANCE_AND_COMPLIANCE.md`](https://www.google.com/search?q=GOVERNANCE_AND_COMPLIANCE.md).*
+* *For the full governance dossier, refer to [`GOVERNANCE_AND_COMPLIANCE.md`](https://www.google.com/search?q=GOVERNANCE_AND_COMPLIANCE.md&utm_source=gemini).*
 
 
 
@@ -141,7 +141,7 @@ Built in strict alignment with global data protection and technical governance s
 
 ### 🚀 Key Technical & Facilitation Highlights
 
-* **Serverless P2P Star Topology**: Powered by PeerJS, the facilitator's laptop acts as the local signaling coordinator (capped at 15 participants) with zero cloud infrastructure overhead.
+* **Serverless P2P Star Topology**: Powered by PeerJS, the facilitator's laptop acts as the local signaling coordinator (capped at 20 participants) with zero cloud infrastructure overhead.
 * **Session Token Decoupling**:
 * Decouples business identity (`clientToken`) from network identity (`PeerID`).
 * When mobile screens sleep or lock, devices reconnect with dynamic PeerIDs under the same Token, **eliminating WebRTC `unavailable-id` race conditions**.
@@ -224,7 +224,7 @@ Built in strict alignment with global data protection and technical governance s
 
 ### 📄 License
 
-This project is open-source and available under the [MIT License](https://www.google.com/search?q=LICENSE). Engineered for corporate facilitators, HR leaders, and privacy-conscious organizations.
+This project is open-source and available under the [MIT License](https://www.google.com/search?q=LICENSE&utm_source=gemini). Engineered for corporate facilitators, HR leaders, and privacy-conscious organizations.
 
 
 
