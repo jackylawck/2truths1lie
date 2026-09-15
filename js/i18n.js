@@ -1,5 +1,5 @@
 /* =========================================================================
- * 🌐 i18n.js - 中英文雙語字典（全功能鍵值完整對齊版）
+ * 🌐 i18n.js - 中英文雙語字典（全功能鍵值完整對齊版 · 20人上限）
  * ========================================================================= */
 const I18N_DICT = {
   zh: {
@@ -15,17 +15,18 @@ const I18N_DICT = {
     host_note_desc: "請務必使用電腦（Chrome / Edge）開房投屏！嚴禁用手機當 Host，以免過熱卡頓。",
     lbl_setup_title: "活動主題 / 班別（選填）：",
     lbl_setup_host: "主持人稱呼（選填）：",
-    ph_setup_title: "例如：新同事迎新會",
-    ph_setup_host: "例如：Jarvis",
+    ph_setup_title: "例如：2026 Q1 新同事迎新會",
+    ph_setup_host: "例如：Jacky",
     btn_as_host: "我是主持人（電腦開房投屏）",
     btn_as_player: "我是參與者（手機掃碼）",
+    compliance_summary: "🔒 資料私隱與法規治理聲明 | Privacy & Governance Dossier",
 
     // 主持人大廳 (Host Lobby)
     host_notice: "⚠️ 主持人注意事項： 請勿重新整理或關閉此分頁！筆電請接上電源線，並確保全體成員連上同一個會議室 Wi-Fi。",
     default_activity_title: "團隊破冰對話",
     txt_host_prefix: "現場主持：",
     txt_room_id: "房號",
-    txt_qr_hint: "手機掃碼或輸入 8 位數連線（上限 15 人）",
+    txt_qr_hint: "手機掃碼或輸入 8 位數連線（上限 20 人）",
     guide_summary: "🎙️ 主持人引導提詞板（30秒開場契約）",
     guide_script_opening: "「今日純粹認識彼此有趣嘅一面。規則：2 真 1 假。可出題、可純猜、可旁聽。唔想答隨時講 Pass，嚴禁追問私隱！」",
     lbl_player_roster: "已就緒名單（點擊名字開題）：",
@@ -100,7 +101,7 @@ const I18N_DICT = {
     err_fill_all: "請填妥 3 句陳述！",
     err_select_lie: "請明確選擇邊一句係【假話】！",
     err_room_id: "請輸入 8 位數房號與姓名！",
-    alert_room_full: "⚠️ 房間已達 15 人上限！請直接在大螢幕共同觀戰。",
+    alert_room_full: "⚠️ 房間已達 20 人上限！請直接在大螢幕共同觀戰。",
     alert_disconnected: "⚠️ 與主持人連線已中斷（可能主持人已關閉頁面）。",
     alert_not_found: "找不到房號，請確認主持人已在電腦大螢幕開房！",
     alert_ended: "🎉 本場破冰已圓滿結束！請睇大螢幕精彩回顧。"
@@ -119,17 +120,18 @@ const I18N_DICT = {
     host_note_desc: "Please host on a Laptop (Chrome / Edge)! Avoid hosting on mobile devices to prevent overheating and latency.",
     lbl_setup_title: "Event Title / Cohort (Optional):",
     lbl_setup_host: "Facilitator Name (Optional):",
-    ph_setup_title: "e.g., New Joiner Onboarding",
-    ph_setup_host: "e.g., Jarvis",
+    ph_setup_title: "e.g., 2026 Q1 New Joiner Onboarding",
+    ph_setup_host: "e.g., Jacky",
     btn_as_host: "I'm Facilitator (Big Screen / Projector)",
     btn_as_player: "I'm Participant (Mobile Scan)",
+    compliance_summary: "🔒 Privacy & Governance Dossier | Data Architecture Notice",
 
     // Host Lobby
     host_notice: "⚠️ Facilitator Note: Do not refresh or close this tab! Keep the laptop plugged in, and ensure all participants are on the same Wi-Fi network.",
     default_activity_title: "Team Icebreaker Session",
     txt_host_prefix: "Facilitated by: ",
     txt_room_id: "Room ID",
-    txt_qr_hint: "Scan QR code or enter 8-digit code (Max 15 participants)",
+    txt_qr_hint: "Scan QR code or enter 8-digit code (Max 20 participants)",
     guide_summary: "🎙️ Facilitator Opening Script (30-sec Ground Rules)",
     guide_script_opening: "\"Today is purely about discovering unexpected, fun facets of each other. 2 Truths, 1 Lie. Feel free to present, vote, or just listen. Pass whenever you want—no grilling!\"",
     lbl_player_roster: "Ready Roster (Click name to start):",
@@ -204,7 +206,7 @@ const I18N_DICT = {
     err_fill_all: "Please fill in all 3 statements!",
     err_select_lie: "Please specify which statement is the LIE!",
     err_room_id: "Please enter an 8-digit Room ID and your name!",
-    alert_room_full: "⚠️ Room has reached its 15-participant limit! Please enjoy the session on the big screen.",
+    alert_room_full: "⚠️ Room has reached its 20-participant limit! Please enjoy the session on the big screen.",
     alert_disconnected: "⚠️ Lost connection with facilitator (the host tab may have been closed).",
     alert_not_found: "Room not found. Please ensure the facilitator has opened the room on the projector screen!",
     alert_ended: "🎉 Session wrapped up! Check the big screen for the highlights."
