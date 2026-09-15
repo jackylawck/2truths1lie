@@ -1,5 +1,5 @@
 /* =========================================================================
- * 📡 p2p.js - 冪等安全通訊層 (Idempotent Launch & Session-based)
+ * 📡 p2p.js - 冪等安全通訊層 (Idempotent Launch & Session-based · 20人上限)
  * ========================================================================= */
 const PEER_CONFIG = {
   config: {
@@ -13,7 +13,8 @@ const PEER_CONFIG = {
   }
 };
 
-const MAX_PARTICIPANTS = 15;
+// 🎯 上限升級至 20 人
+const MAX_PARTICIPANTS = 20;
 // 🎯 明確掛載到 window，消滅跨腳本變數不可見問題
 window.MAX_PARTICIPANTS = MAX_PARTICIPANTS;
 
@@ -133,7 +134,9 @@ function initClientPeer(roomId, onConnected, onDataReceived, onDisconnect, onErr
 
       hostConn.on('data', (data) => {
         if (data.type === 'ROOM_FULL') {
-          alert('⚠️ 房間已達 15 人上限！請直接在大螢幕共同觀戰。');
+          // 🎯 滿額警告同步為 20 人（優先使用 i18n 字典，無字典則回退為 20 人提示）
+          const msg = typeof t === 'function' ? t('alert_room_full') : '⚠️ 房間已達 20 人上限！請直接在大螢幕共同觀戰。';
+          alert(msg);
           return;
         }
         if (onDataReceived) onDataReceived(data);
