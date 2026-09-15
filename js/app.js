@@ -1,6 +1,5 @@
 /* =========================================================================
- * 🎮 app.js - 業務邏輯與狀態機嚴格閉環版
- * 包含：currentRound 生命週期管理、重連者豁免通行、雙語主題回顧
+ * 🎮 app.js - 業務邏輯與企業級資安強化版 (XSS 防護、20人容量、狀態機嚴格閉環)
  * ========================================================================= */
 
 let clientName = '';
@@ -17,7 +16,7 @@ if (!myClientToken) {
 // Host 端狀態
 let sessionMap = {};        // { [clientToken]: peerId }
 let submissions = {};       // { [clientToken]: { name, statements, lieIndex, story } }
-let currentRound = null;    // { token, name, statements, lieIndex, story } (嚴格生命週期控制)
+let currentRound = null;    // { token, name, statements, lieIndex, story }
 let localVotes = { 0: 0, 1: 0, 2: 0 };
 let voteRecords = [];
 let votedTokens = new Set();
@@ -28,6 +27,23 @@ window._activityMeta = {
   activityTitle: '團隊破冰對話',
   hostName: '主持人'
 };
+
+// 🛡️ 企業級資安：原生毫秒級 XSS 轉義工具（保證零延遲）
+function escapeHTML(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// 🛡️ 企業級資安：輸入字串安全消毒與長度防護 (Sanitize & Limit)
+function sanitizeInput(str, maxLen = 100) {
+  if (typeof str !== 'string') return '';
+  return escapeHTML(str.trim().slice(0, maxLen));
+}
 
 if (typeof t !== 'function') {
   window.t = function(key) { return key; };
@@ -58,11 +74,11 @@ function togglePresentationMode() {
 
 function uiSetupHost() {
   try {
-    const titleInp = document.getElementById('setup-activity-title')?.value.trim();
-    const hostInp = document.getElementById('setup-host-name')?.value.trim();
+    const rawTitle = document.getElementById('setup-activity-title')?.value;
+    const rawHost = document.getElementById('setup-host-name')?.value;
 
-    window._activityMeta.activityTitle = titleInp || t('default_activity_title');
-    window._activityMeta.hostName = hostInp || t('txt_host_prefix').replace('：', '').replace(':', '');
+    window._activityMeta.activityTitle = sanitizeInput(rawTitle, 40) || t('default_activity_title');
+    window._activityMeta.hostName = sanitizeInput(rawHost, 20) || t('txt_host_prefix').replace('：', '').replace(':', '');
 
     const bannerTitle = document.getElementById('host-banner-title');
     const bannerHost = document.getElementById('host-banner-host');
@@ -95,7 +111,6 @@ function uiSetupHost() {
         if (cntEl) cntEl.innerText = count;
       },
       (disconnectedPeerId) => {
-        // 連線關閉時同步清理 sessionMap 條目
         for (const [token, pid] of Object.entries(sessionMap)) {
           if (pid === disconnectedPeerId) {
             delete sessionMap[token];
@@ -111,11 +126,17 @@ function uiSetupHost() {
 }
 
 function handleHostReceiveData(data, conn) {
+  if (!data || typeof data !== 'object') return;
+
   // 1. 握手識別 (IDENTIFY)
   if (data.type === 'IDENTIFY') {
-    const isKnownSession = sessionMap[data.clientToken] !== undefined;
+    const token = sanitizeInput(data.clientToken, 32);
+    if (!token) return;
+
+    const isKnownSession = sessionMap[token] !== undefined;
     const currentActiveSessions = Object.keys(sessionMap).length;
-    const limit = window.MAX_PARTICIPANTS || 15;
+    // 🎯 同步為 20 人上限
+    const limit = window.MAX_PARTICIPANTS || 20;
 
     // 🎯 重連者優先：新訪客超額才拒絕，舊人歸隊直接換線放行
     if (!isKnownSession && currentActiveSessions >= limit) {
@@ -126,11 +147,11 @@ function handleHostReceiveData(data, conn) {
       return;
     }
 
-    const oldPeerId = sessionMap[data.clientToken];
+    const oldPeerId = sessionMap[token];
     if (oldPeerId && oldPeerId !== conn.peer) {
       dropOldClientConn(oldPeerId);
     }
-    sessionMap[data.clientToken] = conn.peer;
+    sessionMap[token] = conn.peer;
 
     // 🎯 嚴格狀態管理：只有在 currentRound 確實「活著」時才回送，大廳中絕不誤送舊題
     if (currentRound && conn.open) {
@@ -147,14 +168,19 @@ function handleHostReceiveData(data, conn) {
     return;
   }
 
-  // 2. 題目提交
+  // 2. 題目提交 (實施負載邊界與 XSS 深度過濾)
   if (data.type === 'SUBMIT') {
-    sessionMap[data.clientToken] = conn.peer;
-    submissions[data.clientToken] = {
-      name: data.name,
-      statements: data.statements,
-      lieIndex: data.lieIndex,
-      story: data.story
+    const token = sanitizeInput(data.clientToken, 32);
+    if (!token) return;
+
+    sessionMap[token] = conn.peer;
+    submissions[token] = {
+      name: sanitizeInput(data.name, 20) || '無名氏',
+      statements: Array.isArray(data.statements)
+        ? data.statements.slice(0, 3).map(s => sanitizeInput(s, 100))
+        : ['', '', ''],
+      lieIndex: [0, 1, 2].includes(data.lieIndex) ? data.lieIndex : 0,
+      story: sanitizeInput(data.story, 300)
     };
     renderLobbyRoster();
     return;
@@ -162,11 +188,15 @@ function handleHostReceiveData(data, conn) {
 
   // 3. 投票接收
   if (data.type === 'VOTE') {
-    if (!votedTokens.has(data.clientToken)) {
-      votedTokens.add(data.clientToken);
-      localVotes[data.choice] = (localVotes[data.choice] || 0) + 1;
-      renderHostVoteDisplay();
-      updateVoteProgressUI();
+    const token = sanitizeInput(data.clientToken, 32);
+    const choice = parseInt(data.choice, 10);
+    if (token && [0, 1, 2].includes(choice)) {
+      if (!votedTokens.has(token)) {
+        votedTokens.add(token);
+        localVotes[choice] = (localVotes[choice] || 0) + 1;
+        renderHostVoteDisplay();
+        updateVoteProgressUI();
+      }
     }
   }
 }
@@ -421,16 +451,21 @@ function uiSetupPlayer() {
   switchView('view-player-join');
   const params = new URLSearchParams(window.location.search);
   if (params.get('room')) {
+    const rawRoom = params.get('room').replace(/\D/g, '').slice(0, 8);
     const inp = document.getElementById('join-room-id');
-    if (inp) inp.value = params.get('room');
+    if (inp) inp.value = rawRoom;
   }
 }
 
 function uiConnectAsClient(e) {
   if (e && e.preventDefault) e.preventDefault();
 
-  currentRoomId = document.getElementById('join-room-id')?.value.trim();
-  clientName = document.getElementById('join-player-name')?.value.trim();
+  const rawRoom = document.getElementById('join-room-id')?.value.trim();
+  const rawName = document.getElementById('join-player-name')?.value.trim();
+
+  currentRoomId = rawRoom.replace(/\D/g, '').slice(0, 8);
+  clientName = sanitizeInput(rawName, 20);
+
   const btn = document.querySelector('#view-player-join .btn');
 
   if (!currentRoomId || !clientName) {
@@ -497,11 +532,11 @@ function startClientConnection(btn, isReconnect = false) {
 }
 
 function uiClientSubmit() {
-  const s0 = document.getElementById('p-stmt-0')?.value.trim();
-  const s1 = document.getElementById('p-stmt-1')?.value.trim();
-  const s2 = document.getElementById('p-stmt-2')?.value.trim();
+  const s0 = sanitizeInput(document.getElementById('p-stmt-0')?.value, 100);
+  const s1 = sanitizeInput(document.getElementById('p-stmt-1')?.value, 100);
+  const s2 = sanitizeInput(document.getElementById('p-stmt-2')?.value, 100);
   const lieValue = document.getElementById('p-lie-index')?.value;
-  const story = document.getElementById('p-story')?.value.trim();
+  const story = sanitizeInput(document.getElementById('p-story')?.value, 300);
 
   if (!s0 || !s1 || !s2) {
     alert(t('err_fill_all'));
@@ -537,6 +572,8 @@ function uiClientSubmit() {
 }
 
 function handleClientReceiveData(data) {
+  if (!data || typeof data !== 'object') return;
+
   if (data.type === 'START_ROUND') {
     const waitMsg = document.getElementById('player-waiting-msg');
     const votePanel = document.getElementById('player-active-voting');
@@ -549,12 +586,13 @@ function handleClientReceiveData(data) {
     if (targetName) targetName.innerText = data.name;
 
     const box = document.getElementById('player-choices-box');
-    if (box) {
+    if (box && Array.isArray(data.statements)) {
       box.innerHTML = '';
       data.statements.forEach((stmt, idx) => {
         const card = document.createElement('div');
         card.className = 'choice-card';
         card.id = `p-card-${idx}`;
+        // 使用安全的 innerText 避免 HTML 注入
         card.innerText = `#${idx + 1}. ${stmt}`;
         card.onclick = () => {
           const sent = sendToHost({
